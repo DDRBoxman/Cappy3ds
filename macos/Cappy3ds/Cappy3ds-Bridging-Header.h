@@ -4,4 +4,3 @@
 
 #import "bindings.h"
 
-#import "NSViewBridge.h"

@@ -34,9 +34,8 @@ struct RenderView: NSViewRepresentable {
         let tmp = NSView()
         hello_world()
         
-      
-        NSViewBridge.send(tmp)
-
+        send_window(Unmanaged.passUnretained(tmp).toOpaque())
+        
         return tmp
     }
 

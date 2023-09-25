@@ -14,8 +14,6 @@
 		670A0A902AC14FEE00E03E0D /* Cappy3dsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A8F2AC14FEE00E03E0D /* Cappy3dsTests.swift */; };
 		670A0A9A2AC14FEE00E03E0D /* Cappy3dsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A992AC14FEE00E03E0D /* Cappy3dsUITests.swift */; };
 		670A0A9C2AC14FEE00E03E0D /* Cappy3dsUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A9B2AC14FEE00E03E0D /* Cappy3dsUITestsLaunchTests.swift */; };
-		670A0AAE2AC153D800E03E0D /* test.c in Sources */ = {isa = PBXBuildFile; fileRef = 670A0AAD2AC153D800E03E0D /* test.c */; };
-		67A0F4562AC1EBAA00B072B4 /* NSViewBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 67A0F4552AC1EBAA00B072B4 /* NSViewBridge.m */; };
 		67A0F4582AC22EFB00B072B4 /* libcappy3ds.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 67A0F4572AC22EFB00B072B4 /* libcappy3ds.dylib */; };
 /* End PBXBuildFile section */
 
@@ -61,11 +59,7 @@
 		670A0A992AC14FEE00E03E0D /* Cappy3dsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cappy3dsUITests.swift; sourceTree = "<group>"; };
 		670A0A9B2AC14FEE00E03E0D /* Cappy3dsUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cappy3dsUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		670A0AAB2AC153D800E03E0D /* Cappy3ds-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Cappy3ds-Bridging-Header.h"; sourceTree = "<group>"; };
-		670A0AAC2AC153D800E03E0D /* test.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = test.h; sourceTree = "<group>"; };
-		670A0AAD2AC153D800E03E0D /* test.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = test.c; sourceTree = "<group>"; };
 		67A0F4502AC156D400B072B4 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = bindings.h; path = ../../bindings.h; sourceTree = "<group>"; };
-		67A0F4542AC1EBAA00B072B4 /* NSViewBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSViewBridge.h; sourceTree = "<group>"; };
-		67A0F4552AC1EBAA00B072B4 /* NSViewBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NSViewBridge.m; sourceTree = "<group>"; };
 		67A0F4572AC22EFB00B072B4 /* libcappy3ds.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libcappy3ds.dylib; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -125,11 +119,7 @@
 				670A0A812AC14FEE00E03E0D /* Assets.xcassets */,
 				670A0A862AC14FEE00E03E0D /* Cappy3ds.entitlements */,
 				670A0A832AC14FEE00E03E0D /* Preview Content */,
-				670A0AAC2AC153D800E03E0D /* test.h */,
-				670A0AAD2AC153D800E03E0D /* test.c */,
 				670A0AAB2AC153D800E03E0D /* Cappy3ds-Bridging-Header.h */,
-				67A0F4542AC1EBAA00B072B4 /* NSViewBridge.h */,
-				67A0F4552AC1EBAA00B072B4 /* NSViewBridge.m */,
 			);
 			path = Cappy3ds;
 			sourceTree = "<group>";
@@ -291,8 +281,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				670A0AAE2AC153D800E03E0D /* test.c in Sources */,
-				67A0F4562AC1EBAA00B072B4 /* NSViewBridge.m in Sources */,
 				670A0A802AC14FED00E03E0D /* ContentView.swift in Sources */,
 				670A0A7E2AC14FED00E03E0D /* Cappy3dsApp.swift in Sources */,
 			);
