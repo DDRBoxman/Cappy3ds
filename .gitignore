@@ -1,1 +1,5 @@
 /target
+macos/libcappy3d.dylib
+.DS_Store
+macos/Cappy3d.xcodeproj/xcuserdata/
+macos/Cappy3d.xcodeproj/project.xcworkspace/xcuserdata/
