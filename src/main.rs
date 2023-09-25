@@ -1,9 +1,10 @@
+use bytes::{Buf, BufMut, BytesMut};
+use memchr::memmem;
+use rust_embed::RustEmbed;
 use std::io::Write;
 use std::time::Duration;
-use std::{fs, slice, path};
+use std::{fs, path, slice};
 use std::{thread, time};
-use rust_embed::RustEmbed;
-
 
 use rusb::{
     Context, Device, DeviceDescriptor, DeviceHandle, Direction, Recipient, RequestType, Result,
@@ -11,9 +12,8 @@ use rusb::{
 };
 
 #[derive(RustEmbed)]
-#[folder = "resources/Katsukity/firm.bin"]
+#[folder = "resources/Katsukity/"]
 struct Katsukity;
-
 
 fn main() {
     let firmware = Katsukity::get("firm.bin").unwrap();
@@ -36,10 +36,14 @@ fn main() {
             thread::sleep(sleep_time);
             // todo: loop with device check instead of sleeping
 
-
             match open_device(&mut context, 0x0752, 0xf2c0) {
                 Some((mut device, device_desc, mut handle)) => {
                     println!("Opened secondary device");
+                    match handle.claim_interface(0) {
+                        Ok(_) =>{},
+                        Err(err) =>  panic!("could not claim second device: {}", err),
+                    }
+
                     read_eeprom(&mut handle);
                     configure_fpga(&mut handle, bitstream.data.to_vec());
                     configure_port(&mut handle);
@@ -47,12 +51,7 @@ fn main() {
 
                     let mut file = fs::File::create("./image2.bin").expect("WHY NO FILE");
 
-
-                    let mut test = 0;
-                    while test < 100 {
-                        bulk_read(&mut handle, &mut file);
-                        test += 1;
-                    }
+                    bulk_read(&mut handle, &mut file);
                 }
                 None => println!("secondary device missing, firmware upload failed?"),
             }
@@ -160,7 +159,10 @@ fn read_eeprom<T: UsbContext>(handle: &mut DeviceHandle<T>) {
     let mut buf = [0; 16];
 
     while offset <= 0x70 {
-        handle.write_bulk(1, &[0x38, offset, 0x10, 0x30], timeout);
+        match handle.write_bulk(1, &[0x38, offset, 0x10, 0x30], timeout) {
+            Ok(_) => {},
+            Err(err) => println!("could not write to endpoint: {}", err),
+        }
 
         match handle.read_bulk(0x81, &mut buf, timeout) {
             Ok(len) => {
@@ -198,7 +200,12 @@ fn configure_fpga<T: UsbContext>(handle: &mut DeviceHandle<T>, bitstream: Vec<u8
 
     for command in commands {
         let data = hex::decode(command).expect("Bad hex data");
-        handle.write_bulk(1, &data, timeout);
+        match handle.write_bulk(1, &data, timeout) 
+            {
+                Ok(_) => {},
+                Err(err) => println!("could not program fpga: {}", err),
+            }
+        
     }
 
     // bitstream?
@@ -235,7 +242,6 @@ fn configure_fpga<T: UsbContext>(handle: &mut DeviceHandle<T>, bitstream: Vec<u8
     let mut buf = [0; 7];
     handle.read_bulk(0x81, &mut buf, timeout);
     println!("{:02X?}", buf);
-
 }
 
 fn configure_port<T: UsbContext>(handle: &mut DeviceHandle<T>) {
@@ -258,17 +264,113 @@ fn fifo_stop<T: UsbContext>(handle: &mut DeviceHandle<T>) {
 }
 
 fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>, file: &mut fs::File) {
+    let mut image = Vec::<u8>::with_capacity(0x40000);
+
     let timeout = Duration::from_secs(1);
 
-    let mut vec = Vec::<u8>::with_capacity(65563);
-    let mut buf = unsafe { slice::from_raw_parts_mut((&mut vec[..]).as_mut_ptr(), vec.capacity()) };
+    //let mut buf = BytesMut::with_capacity(65563);
+    let mut buf = [0; 0x40000];
 
-    handle.read_bulk(0x82, &mut buf, timeout);
+    let mut test = 0;
+    let mut have_frame = false;
+    while test < 10 {
+        let size = handle
+            .read_bulk(0x82, &mut buf, timeout)
+            .expect("FAILED TO READ IMAGE DATA");
+        test += 1;
+
+        image.extend_from_slice(&buf);
+    }
 
     //println!("{}", buf.len());
     //println!("{:02X?}", buf);
 
-    if buf.len() > 16384 {
-        file.write_all(buf);
+    //if buf.len() > 16384 {
+    file.write_all(&image);
+    //}
+
+    // 33CC 23C0 1800 0000 0000 1900 0000 0000 (then 240 pixels of image)
+    // 33CC 24C0 1900 0000 0000 1A00 0000 0000 (240)
+    // 33CC 25C0 1A00 0000 0000 1B00 0000 0000
+    // 33CC 26C0 1C00 0000 0000 1D00 0000 0000
+    // ...
+    // 33CC 2EC1 0701 0000 0000 0801 0000 0000
+}
+
+fn parse_image_data(data: &Vec<u8>) {
+    let mut found_frames = 0;
+
+    let mut frame_iter = memmem::find_iter(&data, &[0x33, 0xCC, 0x90]);
+    while let Some(frame_start) = frame_iter.next() {
+        //println!("{}", frame_start);
+
+        let mut out_buf = BytesMut::with_capacity(0x40000);
+
+        //let mut buf =  BytesMut::from(data.as_slice());
+        let thing = &data[frame_start + 3..];
+
+        let mut it = memmem::find_iter(&thing, &[0x33, 0xCC]);
+
+        while let Some(res) = it.next() {
+            if (thing[res + 2] == 0x90) {
+                break;
+            }
+            //println!("{}", res);
+            if res + (240 * 2) > thing.len() {
+                break;
+            }
+            out_buf.put(&thing[res..res + (240 * 2)])
+        }
+
+        let mut image_buffer = BytesMut::with_capacity(0x40000);
+        image_buffer.resize((out_buf.len() / 2 * 3), 0);
+
+        let mut j = 0;
+        for i in (0..out_buf.len()).step_by(2) {
+            let high = (out_buf[i + 1] as u16) << 8;
+            let c: u16 = out_buf[i] as u16 + high;
+            let r = (((c & 0xF800) >> 11) << 3) as u8;
+            let g = (((c & 0x7E0) >> 5) << 2) as u8;
+            let b = ((c & 0x1F) << 3) as u8;
+
+            image_buffer[j] = r;
+            j += 1;
+            image_buffer[j] = g;
+            j += 1;
+            image_buffer[j] = b;
+            j += 1;
+        }
+
+        use image::{ImageBuffer, Rgb};
+        let buffer = ImageBuffer::<Rgb<u8>, _>::from_raw(
+            240,
+            (out_buf.len() / 2 / 240).try_into().unwrap(),
+            image_buffer,
+        )
+        .unwrap();
+
+        buffer.save(format!("./test_{}.png", found_frames));
+
+        //let mut file = fs::File::create(format!("./test_{}.bin", found_frames)).expect("WHY NO FILE");
+
+        //file.write_all(&out_buf);
+
+        found_frames += 1;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use crate::parse_image_data;
+
+    #[test]
+    fn it_works() {
+        let test_data = fs::read("resources/test/image4.bin").expect("Can't load test image");
+
+        parse_image_data(&test_data);
+
+        // println!("{:?}", result.1.len());
     }
 }
