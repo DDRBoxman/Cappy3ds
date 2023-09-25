@@ -7,16 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		670A0A7E2AC14FED00E03E0D /* Cappy3dApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A7D2AC14FED00E03E0D /* Cappy3dApp.swift */; };
+		670A0A7E2AC14FED00E03E0D /* Cappy3dsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A7D2AC14FED00E03E0D /* Cappy3dsApp.swift */; };
 		670A0A802AC14FED00E03E0D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A7F2AC14FED00E03E0D /* ContentView.swift */; };
 		670A0A822AC14FEE00E03E0D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 670A0A812AC14FEE00E03E0D /* Assets.xcassets */; };
 		670A0A852AC14FEE00E03E0D /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 670A0A842AC14FEE00E03E0D /* Preview Assets.xcassets */; };
-		670A0A902AC14FEE00E03E0D /* Cappy3dTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A8F2AC14FEE00E03E0D /* Cappy3dTests.swift */; };
-		670A0A9A2AC14FEE00E03E0D /* Cappy3dUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A992AC14FEE00E03E0D /* Cappy3dUITests.swift */; };
-		670A0A9C2AC14FEE00E03E0D /* Cappy3dUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A9B2AC14FEE00E03E0D /* Cappy3dUITestsLaunchTests.swift */; };
+		670A0A902AC14FEE00E03E0D /* Cappy3dsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A8F2AC14FEE00E03E0D /* Cappy3dsTests.swift */; };
+		670A0A9A2AC14FEE00E03E0D /* Cappy3dsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A992AC14FEE00E03E0D /* Cappy3dsUITests.swift */; };
+		670A0A9C2AC14FEE00E03E0D /* Cappy3dsUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670A0A9B2AC14FEE00E03E0D /* Cappy3dsUITestsLaunchTests.swift */; };
 		670A0AAE2AC153D800E03E0D /* test.c in Sources */ = {isa = PBXBuildFile; fileRef = 670A0AAD2AC153D800E03E0D /* test.c */; };
-		67A0F44F2AC156C100B072B4 /* libcappy3d.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 67A0F44E2AC156C100B072B4 /* libcappy3d.dylib */; };
 		67A0F4562AC1EBAA00B072B4 /* NSViewBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 67A0F4552AC1EBAA00B072B4 /* NSViewBridge.m */; };
+		67A0F4582AC22EFB00B072B4 /* libcappy3ds.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 67A0F4572AC22EFB00B072B4 /* libcappy3ds.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,24 +49,24 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		670A0A7A2AC14FED00E03E0D /* Cappy3d.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cappy3d.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		670A0A7D2AC14FED00E03E0D /* Cappy3dApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cappy3dApp.swift; sourceTree = "<group>"; };
+		670A0A7A2AC14FED00E03E0D /* Cappy3ds.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cappy3ds.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		670A0A7D2AC14FED00E03E0D /* Cappy3dsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cappy3dsApp.swift; sourceTree = "<group>"; };
 		670A0A7F2AC14FED00E03E0D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		670A0A812AC14FEE00E03E0D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		670A0A842AC14FEE00E03E0D /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		670A0A862AC14FEE00E03E0D /* Cappy3d.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Cappy3d.entitlements; sourceTree = "<group>"; };
-		670A0A8B2AC14FEE00E03E0D /* Cappy3dTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Cappy3dTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		670A0A8F2AC14FEE00E03E0D /* Cappy3dTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cappy3dTests.swift; sourceTree = "<group>"; };
-		670A0A952AC14FEE00E03E0D /* Cappy3dUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Cappy3dUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		670A0A992AC14FEE00E03E0D /* Cappy3dUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cappy3dUITests.swift; sourceTree = "<group>"; };
-		670A0A9B2AC14FEE00E03E0D /* Cappy3dUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cappy3dUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		670A0AAB2AC153D800E03E0D /* Cappy3d-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Cappy3d-Bridging-Header.h"; sourceTree = "<group>"; };
+		670A0A862AC14FEE00E03E0D /* Cappy3ds.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Cappy3ds.entitlements; sourceTree = "<group>"; };
+		670A0A8B2AC14FEE00E03E0D /* Cappy3dsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Cappy3dsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		670A0A8F2AC14FEE00E03E0D /* Cappy3dsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cappy3dsTests.swift; sourceTree = "<group>"; };
+		670A0A952AC14FEE00E03E0D /* Cappy3dsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Cappy3dsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		670A0A992AC14FEE00E03E0D /* Cappy3dsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cappy3dsUITests.swift; sourceTree = "<group>"; };
+		670A0A9B2AC14FEE00E03E0D /* Cappy3dsUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cappy3dsUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		670A0AAB2AC153D800E03E0D /* Cappy3ds-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Cappy3ds-Bridging-Header.h"; sourceTree = "<group>"; };
 		670A0AAC2AC153D800E03E0D /* test.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = test.h; sourceTree = "<group>"; };
 		670A0AAD2AC153D800E03E0D /* test.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = test.c; sourceTree = "<group>"; };
-		67A0F44E2AC156C100B072B4 /* libcappy3d.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libcappy3d.dylib; sourceTree = SOURCE_ROOT; };
 		67A0F4502AC156D400B072B4 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = bindings.h; path = ../../bindings.h; sourceTree = "<group>"; };
 		67A0F4542AC1EBAA00B072B4 /* NSViewBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSViewBridge.h; sourceTree = "<group>"; };
 		67A0F4552AC1EBAA00B072B4 /* NSViewBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NSViewBridge.m; sourceTree = "<group>"; };
+		67A0F4572AC22EFB00B072B4 /* libcappy3ds.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libcappy3ds.dylib; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,7 +74,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				67A0F44F2AC156C100B072B4 /* libcappy3d.dylib in Frameworks */,
+				67A0F4582AC22EFB00B072B4 /* libcappy3ds.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,9 +98,9 @@
 		670A0A712AC14FED00E03E0D = {
 			isa = PBXGroup;
 			children = (
-				670A0A7C2AC14FED00E03E0D /* Cappy3d */,
-				670A0A8E2AC14FEE00E03E0D /* Cappy3dTests */,
-				670A0A982AC14FEE00E03E0D /* Cappy3dUITests */,
+				670A0A7C2AC14FED00E03E0D /* Cappy3ds */,
+				670A0A8E2AC14FEE00E03E0D /* Cappy3dsTests */,
+				670A0A982AC14FEE00E03E0D /* Cappy3dsUITests */,
 				670A0A7B2AC14FED00E03E0D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -108,30 +108,30 @@
 		670A0A7B2AC14FED00E03E0D /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				670A0A7A2AC14FED00E03E0D /* Cappy3d.app */,
-				670A0A8B2AC14FEE00E03E0D /* Cappy3dTests.xctest */,
-				670A0A952AC14FEE00E03E0D /* Cappy3dUITests.xctest */,
+				670A0A7A2AC14FED00E03E0D /* Cappy3ds.app */,
+				670A0A8B2AC14FEE00E03E0D /* Cappy3dsTests.xctest */,
+				670A0A952AC14FEE00E03E0D /* Cappy3dsUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		670A0A7C2AC14FED00E03E0D /* Cappy3d */ = {
+		670A0A7C2AC14FED00E03E0D /* Cappy3ds */ = {
 			isa = PBXGroup;
 			children = (
-				67A0F44E2AC156C100B072B4 /* libcappy3d.dylib */,
+				67A0F4572AC22EFB00B072B4 /* libcappy3ds.dylib */,
 				67A0F4502AC156D400B072B4 /* bindings.h */,
-				670A0A7D2AC14FED00E03E0D /* Cappy3dApp.swift */,
+				670A0A7D2AC14FED00E03E0D /* Cappy3dsApp.swift */,
 				670A0A7F2AC14FED00E03E0D /* ContentView.swift */,
 				670A0A812AC14FEE00E03E0D /* Assets.xcassets */,
-				670A0A862AC14FEE00E03E0D /* Cappy3d.entitlements */,
+				670A0A862AC14FEE00E03E0D /* Cappy3ds.entitlements */,
 				670A0A832AC14FEE00E03E0D /* Preview Content */,
 				670A0AAC2AC153D800E03E0D /* test.h */,
 				670A0AAD2AC153D800E03E0D /* test.c */,
-				670A0AAB2AC153D800E03E0D /* Cappy3d-Bridging-Header.h */,
+				670A0AAB2AC153D800E03E0D /* Cappy3ds-Bridging-Header.h */,
 				67A0F4542AC1EBAA00B072B4 /* NSViewBridge.h */,
 				67A0F4552AC1EBAA00B072B4 /* NSViewBridge.m */,
 			);
-			path = Cappy3d;
+			path = Cappy3ds;
 			sourceTree = "<group>";
 		};
 		670A0A832AC14FEE00E03E0D /* Preview Content */ = {
@@ -142,29 +142,29 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		670A0A8E2AC14FEE00E03E0D /* Cappy3dTests */ = {
+		670A0A8E2AC14FEE00E03E0D /* Cappy3dsTests */ = {
 			isa = PBXGroup;
 			children = (
-				670A0A8F2AC14FEE00E03E0D /* Cappy3dTests.swift */,
+				670A0A8F2AC14FEE00E03E0D /* Cappy3dsTests.swift */,
 			);
-			path = Cappy3dTests;
+			path = Cappy3dsTests;
 			sourceTree = "<group>";
 		};
-		670A0A982AC14FEE00E03E0D /* Cappy3dUITests */ = {
+		670A0A982AC14FEE00E03E0D /* Cappy3dsUITests */ = {
 			isa = PBXGroup;
 			children = (
-				670A0A992AC14FEE00E03E0D /* Cappy3dUITests.swift */,
-				670A0A9B2AC14FEE00E03E0D /* Cappy3dUITestsLaunchTests.swift */,
+				670A0A992AC14FEE00E03E0D /* Cappy3dsUITests.swift */,
+				670A0A9B2AC14FEE00E03E0D /* Cappy3dsUITestsLaunchTests.swift */,
 			);
-			path = Cappy3dUITests;
+			path = Cappy3dsUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		670A0A792AC14FED00E03E0D /* Cappy3d */ = {
+		670A0A792AC14FED00E03E0D /* Cappy3ds */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 670A0A9F2AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3d" */;
+			buildConfigurationList = 670A0A9F2AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3ds" */;
 			buildPhases = (
 				670A0A762AC14FED00E03E0D /* Sources */,
 				670A0AB52AC1564E00E03E0D /* CopyFiles */,
@@ -175,14 +175,14 @@
 			);
 			dependencies = (
 			);
-			name = Cappy3d;
+			name = Cappy3ds;
 			productName = Cappy3d;
-			productReference = 670A0A7A2AC14FED00E03E0D /* Cappy3d.app */;
+			productReference = 670A0A7A2AC14FED00E03E0D /* Cappy3ds.app */;
 			productType = "com.apple.product-type.application";
 		};
-		670A0A8A2AC14FEE00E03E0D /* Cappy3dTests */ = {
+		670A0A8A2AC14FEE00E03E0D /* Cappy3dsTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 670A0AA22AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3dTests" */;
+			buildConfigurationList = 670A0AA22AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3dsTests" */;
 			buildPhases = (
 				670A0A872AC14FEE00E03E0D /* Sources */,
 				670A0A882AC14FEE00E03E0D /* Frameworks */,
@@ -193,14 +193,14 @@
 			dependencies = (
 				670A0A8D2AC14FEE00E03E0D /* PBXTargetDependency */,
 			);
-			name = Cappy3dTests;
+			name = Cappy3dsTests;
 			productName = Cappy3dTests;
-			productReference = 670A0A8B2AC14FEE00E03E0D /* Cappy3dTests.xctest */;
+			productReference = 670A0A8B2AC14FEE00E03E0D /* Cappy3dsTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		670A0A942AC14FEE00E03E0D /* Cappy3dUITests */ = {
+		670A0A942AC14FEE00E03E0D /* Cappy3dsUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 670A0AA52AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3dUITests" */;
+			buildConfigurationList = 670A0AA52AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3dsUITests" */;
 			buildPhases = (
 				670A0A912AC14FEE00E03E0D /* Sources */,
 				670A0A922AC14FEE00E03E0D /* Frameworks */,
@@ -211,9 +211,9 @@
 			dependencies = (
 				670A0A972AC14FEE00E03E0D /* PBXTargetDependency */,
 			);
-			name = Cappy3dUITests;
+			name = Cappy3dsUITests;
 			productName = Cappy3dUITests;
-			productReference = 670A0A952AC14FEE00E03E0D /* Cappy3dUITests.xctest */;
+			productReference = 670A0A952AC14FEE00E03E0D /* Cappy3dsUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -240,7 +240,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 670A0A752AC14FED00E03E0D /* Build configuration list for PBXProject "Cappy3d" */;
+			buildConfigurationList = 670A0A752AC14FED00E03E0D /* Build configuration list for PBXProject "Cappy3ds" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -253,9 +253,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				670A0A792AC14FED00E03E0D /* Cappy3d */,
-				670A0A8A2AC14FEE00E03E0D /* Cappy3dTests */,
-				670A0A942AC14FEE00E03E0D /* Cappy3dUITests */,
+				670A0A792AC14FED00E03E0D /* Cappy3ds */,
+				670A0A8A2AC14FEE00E03E0D /* Cappy3dsTests */,
+				670A0A942AC14FEE00E03E0D /* Cappy3dsUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -294,7 +294,7 @@
 				670A0AAE2AC153D800E03E0D /* test.c in Sources */,
 				67A0F4562AC1EBAA00B072B4 /* NSViewBridge.m in Sources */,
 				670A0A802AC14FED00E03E0D /* ContentView.swift in Sources */,
-				670A0A7E2AC14FED00E03E0D /* Cappy3dApp.swift in Sources */,
+				670A0A7E2AC14FED00E03E0D /* Cappy3dsApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,7 +302,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				670A0A902AC14FEE00E03E0D /* Cappy3dTests.swift in Sources */,
+				670A0A902AC14FEE00E03E0D /* Cappy3dsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -310,8 +310,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				670A0A9A2AC14FEE00E03E0D /* Cappy3dUITests.swift in Sources */,
-				670A0A9C2AC14FEE00E03E0D /* Cappy3dUITestsLaunchTests.swift in Sources */,
+				670A0A9A2AC14FEE00E03E0D /* Cappy3dsUITests.swift in Sources */,
+				670A0A9C2AC14FEE00E03E0D /* Cappy3dsUITestsLaunchTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -320,12 +320,12 @@
 /* Begin PBXTargetDependency section */
 		670A0A8D2AC14FEE00E03E0D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 670A0A792AC14FED00E03E0D /* Cappy3d */;
+			target = 670A0A792AC14FED00E03E0D /* Cappy3ds */;
 			targetProxy = 670A0A8C2AC14FEE00E03E0D /* PBXContainerItemProxy */;
 		};
 		670A0A972AC14FEE00E03E0D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 670A0A792AC14FED00E03E0D /* Cappy3d */;
+			target = 670A0A792AC14FED00E03E0D /* Cappy3ds */;
 			targetProxy = 670A0A962AC14FEE00E03E0D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -450,11 +450,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Cappy3d/Cappy3d.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Cappy3ds/Cappy3ds.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Cappy3d/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Cappy3ds/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -467,10 +467,10 @@
 					"$(PROJECT_DIR)",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3d;
+				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3ds;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Cappy3d/Cappy3d-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "Cappy3ds/Cappy3ds-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -482,11 +482,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Cappy3d/Cappy3d.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Cappy3ds/Cappy3ds.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Cappy3d/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Cappy3ds/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -499,10 +499,10 @@
 					"$(PROJECT_DIR)",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3d;
+				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3ds;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Cappy3d/Cappy3d-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "Cappy3ds/Cappy3ds-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -517,11 +517,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3dTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3dsTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Cappy3d.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Cappy3d";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Cappy3d.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Cappy3ds";
 			};
 			name = Debug;
 		};
@@ -535,11 +535,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3dTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3dsTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Cappy3d.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Cappy3d";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Cappy3d.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Cappy3ds";
 			};
 			name = Release;
 		};
@@ -551,11 +551,11 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3dUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3dsUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = Cappy3d;
+				TEST_TARGET_NAME = Cappy3ds;
 			};
 			name = Debug;
 		};
@@ -567,18 +567,18 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3dUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.recursivepenguin.Cappy3dsUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = Cappy3d;
+				TEST_TARGET_NAME = Cappy3ds;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		670A0A752AC14FED00E03E0D /* Build configuration list for PBXProject "Cappy3d" */ = {
+		670A0A752AC14FED00E03E0D /* Build configuration list for PBXProject "Cappy3ds" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				670A0A9D2AC14FEE00E03E0D /* Debug */,
@@ -587,7 +587,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		670A0A9F2AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3d" */ = {
+		670A0A9F2AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3ds" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				670A0AA02AC14FEE00E03E0D /* Debug */,
@@ -596,7 +596,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		670A0AA22AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3dTests" */ = {
+		670A0AA22AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3dsTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				670A0AA32AC14FEE00E03E0D /* Debug */,
@@ -605,7 +605,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		670A0AA52AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3dUITests" */ = {
+		670A0AA52AC14FEE00E03E0D /* Build configuration list for PBXNativeTarget "Cappy3dsUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				670A0AA62AC14FEE00E03E0D /* Debug */,

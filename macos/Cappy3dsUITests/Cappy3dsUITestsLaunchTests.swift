@@ -1,13 +1,13 @@
 //
-//  Cappy3dUITestsLaunchTests.swift
-//  Cappy3dUITests
+//  Cappy3dsUITestsLaunchTests.swift
+//  Cappy3dsUITests
 //
 //  Created by Colin Edwards on 9/25/23.
 //
 
 import XCTest
 
-final class Cappy3dUITestsLaunchTests: XCTestCase {
+final class Cappy3dsUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

@@ -1,6 +1,6 @@
 //
-//  Cappy3dUITests.swift
-//  Cappy3dUITests
+//  Cappy3dsUITests.swift
+//  Cappy3dsUITests
 //
 //  Created by Colin Edwards on 9/25/23.
 //

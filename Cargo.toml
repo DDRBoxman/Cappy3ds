@@ -27,5 +27,5 @@ raw-window-handle = "0.5.2"
 futures = "0.3.28"
 
 [lib]
-name = "cappy3d"
+name = "cappy3ds"
 crate-type = ["staticlib", "cdylib"]
