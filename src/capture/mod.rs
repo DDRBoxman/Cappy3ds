@@ -15,7 +15,7 @@ use rusb::{
 #[folder = "resources/Katsukity/"]
 struct Katsukity;
 
-fn main() {
+pub fn do_capture() {
     let firmware = Katsukity::get("firm.bin").unwrap();
     let bitstream = Katsukity::get("bitstream.bin").unwrap();
 
@@ -269,24 +269,40 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>, file: &mut fs::File) {
     let timeout = Duration::from_secs(1);
 
     //let mut buf = BytesMut::with_capacity(65563);
-    let mut buf = [0; 0x40000];
+    let mut buf = [0; 0x4000];
+
+    let mut i = 0;
+    let mut init_buf = [0; 0x4000];
+    while i<10 {
+        handle.write_bulk(0x82, &init_buf, timeout);
+        i += 1;
+    }
 
     let mut test = 0;
     let mut have_frame = false;
-    while test < 10 {
+    while test < 80 {
         let size = handle
             .read_bulk(0x82, &mut buf, timeout)
             .expect("FAILED TO READ IMAGE DATA");
+
+        //println!("{}", size);
+
+        //handle.write_bulk(0x82, &buf, timeout);
+
+
         test += 1;
 
-        image.extend_from_slice(&buf);
+        image.write_all(&buf);
+        //image.extend_from_slice(&buf);
     }
+
+    parse_image_data(&image);
 
     //println!("{}", buf.len());
     //println!("{:02X?}", buf);
 
     //if buf.len() > 16384 {
-    file.write_all(&image);
+    //file.write_all(&image);
     //}
 
     // 33CC 23C0 1800 0000 0000 1900 0000 0000 (then 240 pixels of image)
@@ -300,7 +316,7 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>, file: &mut fs::File) {
 fn parse_image_data(data: &Vec<u8>) {
     let mut found_frames = 0;
 
-    let mut frame_iter = memmem::find_iter(&data, &[0x33, 0xCC, 0x90]);
+    let mut frame_iter = memmem::find_iter(&data, &[0x33, 0xCC, 0x00, 0x00]);
     while let Some(frame_start) = frame_iter.next() {
         //println!("{}", frame_start);
 
@@ -312,14 +328,14 @@ fn parse_image_data(data: &Vec<u8>) {
         let mut it = memmem::find_iter(&thing, &[0x33, 0xCC]);
 
         while let Some(res) = it.next() {
-            if (thing[res + 2] == 0x90) {
+            if (thing[res + 2] == 0x90 ) {
                 break;
             }
             //println!("{}", res);
-            if res + (240 * 2) > thing.len() {
+            if res + (248 * 2) > thing.len() {
                 break;
             }
-            out_buf.put(&thing[res..res + (240 * 2)])
+            out_buf.put(&thing[res..res + (248 * 2)])
         }
 
         let mut image_buffer = BytesMut::with_capacity(0x40000);
@@ -343,8 +359,8 @@ fn parse_image_data(data: &Vec<u8>) {
 
         use image::{ImageBuffer, Rgb};
         let buffer = ImageBuffer::<Rgb<u8>, _>::from_raw(
-            240,
-            (out_buf.len() / 2 / 240).try_into().unwrap(),
+            248,
+            (out_buf.len() / 2 / 248).try_into().unwrap(),
             image_buffer,
         )
         .unwrap();
