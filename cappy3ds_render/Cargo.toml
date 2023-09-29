@@ -3,7 +3,11 @@ name = "cappy3ds_render"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+build = "build.rs"
+
+[build-dependencies]
+cbindgen = "0.1.29"
+csbindgen = "1.8.0"
 
 [dependencies]
 bytemuck = { version = "1.14", features = [ "derive" ] }
