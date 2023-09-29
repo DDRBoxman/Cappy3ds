@@ -13,11 +13,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-using static System.Net.Mime.MediaTypeNames;
+
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -28,11 +29,15 @@ namespace Cappy3ds
 
     public sealed partial class MainWindow : Window
     {
-        [ComImport, Guid("63aad0b8-7c24-40ff-85a8-640d944cc325"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        /// <summary>
+        /// Interface from microsoft.ui.xaml.media.dxinterop.h
+        /// </summary>
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("63aad0b8-7c24-40ff-85a8-640d944cc325")]
         public interface ISwapChainPanelNative
         {
-           // [PreserveSig]
-           // HRESULT SetSwapChain(IDXGISwapChain swapChain);
+            [PreserveSig] uint SetSwapChain([In] IntPtr swapChain);
         }
 
         public MainWindow()
@@ -41,18 +46,29 @@ namespace Cappy3ds
 
             unsafe
             {
-                CsBindgen.NativeMethods.send_visual();
+                ISwapChainPanelNative panelNative = WinRT.CastExtensions.As<ISwapChainPanelNative>(swapChainPanel1);
+
+                // pointer?
+                CsBindgen.NativeMethods.send_visual((void*)panelNative, &Sum);
             }
 
             // renderView.setup();
 
-            //ISwapChainPanelNative panelNative = WinRT.CastExtensions.As<ISwapChainPanelNative>(swapChainPanel1);
-            //hr = panelNative.SetSwapChain(m_pDXGISwapChain1);
+
         }
 
         private void myButton_Click(object sender, RoutedEventArgs e)
         {
             myButton.Content = "Clicked";
         }
+
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+        unsafe static int Sum(void* panel, void* test) {
+            // cast panel back
+             panel.SetSwapChain(test);
+            return 1;
+        }
     }
+
+
 }

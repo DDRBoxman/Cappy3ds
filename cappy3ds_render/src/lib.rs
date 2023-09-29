@@ -17,7 +17,7 @@ pub use render::State;
 
 #[no_mangle]
 #[cfg(target_os = "windows")]
-pub extern "C" fn send_visual(callback: unsafe extern "C" fn( *mut ffi::c_void)) {
+pub extern "C" fn send_visual(panel: *mut ffi::c_void, callback: extern "C" fn( *mut ffi::c_void, *mut ffi::c_void) -> i32) {
     use wgpu::Surface;
 
     let mut res = State::new_from_visual();
@@ -28,8 +28,13 @@ pub extern "C" fn send_visual(callback: unsafe extern "C" fn( *mut ffi::c_void))
             .as_hal_mut::<wgpu_hal::dx12::Api, _, _>(|surface| {
                 match surface {
                     Some(surface) => {
-                        // bleh it's private
-                        callback(surface.swap_chain.as_raw() as *mut ffi::c_void);
+                        match surface.swap_chain {
+                            Some(chain) => {
+                                callback(panel, chain.raw);
+                            }
+                            None => todo!(),
+                        }
+                        
                     },
                     None => todo!(),
                 }
