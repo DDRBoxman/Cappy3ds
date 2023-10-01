@@ -10,6 +10,6 @@
 
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
         <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
-        <SwapChainPanel x:Name="swapChainPanel1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ></SwapChainPanel>
+        <SwapChainPanel x:Name="swapChainPanel1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="400" Width="400" ></SwapChainPanel>
     </StackPanel>
 </Window>

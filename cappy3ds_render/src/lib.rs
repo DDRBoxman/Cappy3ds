@@ -28,9 +28,9 @@ pub extern "C" fn send_visual(panel: *mut ffi::c_void, callback: extern "C" fn( 
             .as_hal_mut::<wgpu_hal::dx12::Api, _, _>(|surface| {
                 match surface {
                     Some(surface) => {
-                        match surface.swap_chain {
+                        match &surface.swap_chain {
                             Some(chain) => {
-                                callback(panel, chain.raw);
+                                callback(panel, chain.raw.as_mut_ptr() as *mut ffi::c_void);
                             }
                             None => todo!(),
                         }
@@ -41,7 +41,7 @@ pub extern "C" fn send_visual(panel: *mut ffi::c_void, callback: extern "C" fn( 
             })
     };
 
-    // v.render();
+     v.render();
 }
 
 #[no_mangle]

@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -18,6 +19,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using WinRT;
 
 
 
@@ -46,10 +48,9 @@ namespace Cappy3ds
 
             unsafe
             {
-                ISwapChainPanelNative panelNative = WinRT.CastExtensions.As<ISwapChainPanelNative>(swapChainPanel1);
 
-                // pointer?
-                CsBindgen.NativeMethods.send_visual((void*)panelNative, &Sum);
+          
+                CsBindgen.NativeMethods.send_visual((void*)((IWinRTObject)swapChainPanel1).NativeObject.GetRef(), &Sum);
             }
 
             // renderView.setup();
@@ -64,8 +65,16 @@ namespace Cappy3ds
 
         [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
         unsafe static int Sum(void* panel, void* test) {
+            Debug.WriteLine("test");
+
             // cast panel back
-             panel.SetSwapChain(test);
+            var panel2 = SwapChainPanel.FromAbi((IntPtr)panel);
+            ISwapChainPanelNative panelNative = WinRT.CastExtensions.As<ISwapChainPanelNative>(panel2);
+
+            panelNative.SetSwapChain((IntPtr)test);
+
+
+
             return 1;
         }
     }
