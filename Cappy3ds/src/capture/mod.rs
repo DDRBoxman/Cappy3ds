@@ -2,9 +2,11 @@ use bytes::{Buf, BufMut, BytesMut};
 use memchr::memmem;
 use rust_embed::RustEmbed;
 use std::io::Write;
+use std::ptr;
 use std::time::Duration;
-use std::{fs, path, slice};
+use std::{ffi, fs, path, slice};
 use std::{thread, time};
+extern crate libusb1_sys as usbffi;
 
 use rusb::{
     Context, Device, DeviceDescriptor, DeviceHandle, Direction, Recipient, RequestType, Result,
@@ -40,8 +42,8 @@ pub fn do_capture() {
                 Some((mut device, device_desc, mut handle)) => {
                     println!("Opened secondary device");
                     match handle.claim_interface(0) {
-                        Ok(_) =>{},
-                        Err(err) =>  panic!("could not claim second device: {}", err),
+                        Ok(_) => {}
+                        Err(err) => panic!("could not claim second device: {}", err),
                     }
 
                     read_eeprom(&mut handle);
@@ -160,7 +162,7 @@ fn read_eeprom<T: UsbContext>(handle: &mut DeviceHandle<T>) {
 
     while offset <= 0x70 {
         match handle.write_bulk(1, &[0x38, offset, 0x10, 0x30], timeout) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(err) => println!("could not write to endpoint: {}", err),
         }
 
@@ -200,12 +202,10 @@ fn configure_fpga<T: UsbContext>(handle: &mut DeviceHandle<T>, bitstream: Vec<u8
 
     for command in commands {
         let data = hex::decode(command).expect("Bad hex data");
-        match handle.write_bulk(1, &data, timeout) 
-            {
-                Ok(_) => {},
-                Err(err) => println!("could not program fpga: {}", err),
-            }
-        
+        match handle.write_bulk(1, &data, timeout) {
+            Ok(_) => {}
+            Err(err) => println!("could not program fpga: {}", err),
+        }
     }
 
     // bitstream?
@@ -224,9 +224,11 @@ fn configure_fpga<T: UsbContext>(handle: &mut DeviceHandle<T>, bitstream: Vec<u8
         "60018000",
         "600101ff",
         "600230ff60cc600200ff00ff600230ff60ff600230ff60ff",
-        "71038f9db726685e0140c300000230ff6065",
+        "71038f9db726685e0140c300000230ff6065", // 565
+        // "71038f9db726685e014f0800000230ff6065", //888
         "64600200ff00ff600230ff60c2600120ff",
-        "6107000f003e00f800100056800a0100",
+        "6107000f003e00f800100056800a0100", // 565
+                                            // "6107008f003c00f200380056800a0100" //888
     ];
 
     for command in end_commands {
@@ -263,32 +265,75 @@ fn fifo_stop<T: UsbContext>(handle: &mut DeviceHandle<T>) {
     handle.write_bulk(1, &[0x41], timeout);
 }
 
+extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::libusb_transfer) {
+    let transfer: &mut usbffi::libusb_transfer = unsafe { &mut *transfer_ptr };
+
+    unsafe { usbffi::libusb_submit_transfer(transfer_ptr) };
+}
+
 fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>, file: &mut fs::File) {
+    let mut buf = [0u8; 0x4000];
+
+    unsafe {
+        let transfer = usbffi::libusb_alloc_transfer(0);
+
+        usbffi::libusb_fill_bulk_transfer(
+            transfer,
+            handle.as_raw(),
+            0x82,
+            buf.as_mut_ptr(),
+            0x4000,
+            transfer_finished::<T> as _,
+            ptr::null_mut(),
+            1000,
+        );
+
+        usbffi::libusb_submit_transfer(transfer);
+    }
+
     let mut image = Vec::<u8>::with_capacity(0x40000);
 
-    let timeout = Duration::from_secs(1);
+    let timeout = Duration::from_millis(100);
+    let mut in_buf = [0u8; 64];
 
-    //let mut buf = BytesMut::with_capacity(65563);
-    let mut buf = [0; 0x4000];
+    /*loop {
+        match handle
+        .read_bulk(0x82, &mut in_buf, timeout) {
+            Ok(size) => {
+                println!("Cleared residual USB buffer of size {size}");
+            }
+            Err(err) => {
+                println!("could not read from endpoint: {}", err);
+                break;
+            }
+        }
+    }*/
 
-    let mut i = 0;
-    let mut init_buf = [0; 0x4000];
-    while i<10 {
-        handle.write_bulk(0x82, &init_buf, timeout);
-        i += 1;
-    }
+    let timeout = Duration::from_millis(50);
 
     let mut test = 0;
     let mut have_frame = false;
     while test < 80 {
-        let size = handle
-            .read_bulk(0x82, &mut buf, timeout)
-            .expect("FAILED TO READ IMAGE DATA");
+        let mut buf = [0u8; 0x4000];
+        //let mut buf = BytesMut::with_capacity(0x40000);
+
+        match handle.read_bulk(0x82, &mut buf, timeout) {
+            Ok(len) => {
+                //println!("{:02X?}", buf);
+            }
+            Err(err) => {
+                //println!("could not read from endpoint: {}", err);
+                continue;
+            } //println!("could not read from endpoint: {}", err),
+        }
+
+        /*let size = handle
+        .read_bulk(0x82, &mut buf, timeout)
+        .expect("FAILED TO READ IMAGE DATA");*/
 
         //println!("{}", size);
 
         //handle.write_bulk(0x82, &buf, timeout);
-
 
         test += 1;
 
@@ -328,9 +373,9 @@ fn parse_image_data(data: &Vec<u8>) {
         let mut it = memmem::find_iter(&thing, &[0x33, 0xCC]);
 
         while let Some(res) = it.next() {
-            if (thing[res + 2] == 0x90 ) {
+            /*if (thing[res + 2] == 0x90 ) {
                 break;
-            }
+            }*/
             //println!("{}", res);
             if res + (248 * 2) > thing.len() {
                 break;
@@ -372,21 +417,5 @@ fn parse_image_data(data: &Vec<u8>) {
         //file.write_all(&out_buf);
 
         found_frames += 1;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::fs;
-
-    use crate::parse_image_data;
-
-    #[test]
-    fn it_works() {
-        let test_data = fs::read("resources/test/image4.bin").expect("Can't load test image");
-
-        parse_image_data(&test_data);
-
-        // println!("{:?}", result.1.len());
     }
 }

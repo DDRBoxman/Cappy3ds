@@ -147,10 +147,6 @@ impl State {
         &self.window
     }*/
 
-    fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        todo!()
-    }
-
     fn update(&mut self) {
         todo!()
     }

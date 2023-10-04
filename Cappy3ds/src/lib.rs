@@ -30,6 +30,17 @@ pub extern "C" fn send_window(appKitNSView: *mut ffi::c_void) {
     v.render();
 }
 
+pub fn send_raw_window<
+    W: raw_window_handle::HasRawWindowHandle + raw_window_handle::HasRawDisplayHandle,
+>(
+    window: &W,
+) {
+    let mut res = State::new(&window);
+    let mut v = executor::block_on(res);
+
+    v.render();
+}
+
 pub struct Window {
     //id: usize,
     // ns_window: *mut ffi::c_void,
