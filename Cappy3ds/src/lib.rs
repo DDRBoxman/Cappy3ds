@@ -9,22 +9,24 @@ mod render;
 
 pub use render::render::State;
 
+mod capture;
+
 #[no_mangle]
 pub extern "C" fn hello_world() {
     println!("Hello World!");
 }
 
 #[no_mangle]
-pub extern "C" fn send_window(appKitNSView: *mut ffi::c_void) {
+pub extern "C" fn send_window(app_kit_nsview: *mut ffi::c_void) {
     let window = Window {
-        ns_view: appKitNSView,
+        ns_view: app_kit_nsview,
     };
     /*let mut window_handle = AppKitWindowHandle::empty();
     window_handle.ns_view = appKitNSView;
 
     let handle = RawWindowHandle::AppKit(window_handle);*/
 
-    let mut res = State::new(&window);
+    let res = State::new(&window);
     let mut v = executor::block_on(res);
 
     v.render();
@@ -35,7 +37,9 @@ pub fn send_raw_window<
 >(
     window: &W,
 ) {
-    let mut res = State::new(&window);
+    capture::do_capture();
+
+    let res = State::new(&window);
     let mut v = executor::block_on(res);
 
     v.render();

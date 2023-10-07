@@ -248,6 +248,7 @@ dependencies = [
  "futures",
  "hex",
  "image",
+ "libc",
  "libusb1-sys",
  "log",
  "memchr",

@@ -1,8 +1,11 @@
-use bytes::{Buf, BufMut, BytesMut};
+use bytes::{buf, Buf, BufMut, BytesMut};
 use memchr::memmem;
 use rust_embed::RustEmbed;
+use std::ffi::c_void;
 use std::io::Write;
 use std::ptr;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::{ffi, fs, path, slice};
 use std::{thread, time};
@@ -46,9 +49,12 @@ pub fn do_capture() {
                         Err(err) => panic!("could not claim second device: {}", err),
                     }
 
-                    read_eeprom(&mut handle);
-                    configure_fpga(&mut handle, bitstream.data.to_vec());
-                    configure_port(&mut handle);
+                    if (check_fpga_programmed(&mut handle)) {
+                    } else {
+                        read_eeprom(&mut handle);
+                        configure_fpga(&mut handle, bitstream.data.to_vec());
+                        configure_port(&mut handle);
+                    }
                     fifo_start(&mut handle);
 
                     let mut file = fs::File::create("./image2.bin").expect("WHY NO FILE");
@@ -246,6 +252,21 @@ fn configure_fpga<T: UsbContext>(handle: &mut DeviceHandle<T>, bitstream: Vec<u8
     println!("{:02X?}", buf);
 }
 
+fn check_fpga_programmed<T: UsbContext>(handle: &mut DeviceHandle<T>) -> bool {
+    let timeout = Duration::from_secs(1);
+
+    let mut buf = [0; 7];
+    handle.read_bulk(0x81, &mut buf, timeout);
+    println!("FPGA Response {:02X?}", buf);
+
+    if buf == [0x09, 0x02, 0x27, 0x00, 0x01, 0x01, 0x00] {
+        println!("FPGA Empty Response");
+        return false;
+    }
+
+    return true;
+}
+
 fn configure_port<T: UsbContext>(handle: &mut DeviceHandle<T>) {
     let timeout = Duration::from_secs(1);
 
@@ -268,33 +289,174 @@ fn fifo_stop<T: UsbContext>(handle: &mut DeviceHandle<T>) {
 extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::libusb_transfer) {
     let transfer: &mut usbffi::libusb_transfer = unsafe { &mut *transfer_ptr };
 
+    let user_data = transfer.user_data;
+
+    if user_data.is_null() {
+        // todo: some sort of cleanup????
+        return;
+    }
+
+    //println!("transfer received");
+    //println!("{}", transfer.);
+
+    let buf = transfer.buffer;
+    //let buf = std::ptr::slice_from_raw_parts_mut(buf, 0x4000);
+    //let buf = unsafe { *buf } ;
+
+    // let transfer = unsafe { Arc::from_raw(user_data) };
+
+    //let mut array = std::ptr::slice_from_raw_parts_mut(data, v.len());
+
+    let s = unsafe { slice::from_raw_parts(buf, 0x4000) };
+    let mut ss = [0; 0x4000];
+    ss.copy_from_slice(s);
+
+    //println!("{:?}", ss);
+
+    //println!("COPY");
+
+    let bulk_transfer = unsafe { user_data as *mut BulkTransfer };
+
+
+   unsafe { (*bulk_transfer).capture_handler
+        .lock()
+        .unwrap()
+        .image
+        .extend_from_slice(&ss);
+   }
+
+   /*  let transfer = unsafe { Box::from_raw(user_data as *mut BulkTransfer) };
+
+    bulk_transfer
+        .capture_handler
+        .lock()
+        .unwrap()
+        .image
+        .extend_from_slice(&ss);
+
+    //println!("EXTENDED");*/
+
     unsafe { usbffi::libusb_submit_transfer(transfer_ptr) };
+
+    // println!("SUBMIT");
+}
+
+struct CaptureHandler {
+    image: Vec<u8>,
+}
+
+impl CaptureHandler {
+    fn new() -> Self {
+        Self {
+            image: Vec::<u8>::with_capacity(0x40000),
+        }
+    }
+}
+
+struct BulkTransfer {
+    //lib_usb_transfer: *mut usbffi::libusb_transfer,
+    capture_handler: Arc<Mutex<CaptureHandler>>,
+}
+
+impl BulkTransfer {
+    fn new(capture_handler: Arc<Mutex<CaptureHandler>>) -> Self {
+        /*  let transfer;
+        unsafe {
+           // transfer = usbffi::libusb_alloc_transfer(0);
+        }*/
+
+        Self { capture_handler }
+    }
 }
 
 fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>, file: &mut fs::File) {
-    let mut buf = [0u8; 0x4000];
+    println!("Starting Bulk Read");
 
-    unsafe {
-        let transfer = usbffi::libusb_alloc_transfer(0);
+    let capture_handler = Arc::new(Mutex::new(CaptureHandler::new()));
 
-        usbffi::libusb_fill_bulk_transfer(
-            transfer,
-            handle.as_raw(),
-            0x82,
-            buf.as_mut_ptr(),
-            0x4000,
-            transfer_finished::<T> as _,
-            ptr::null_mut(),
-            1000,
-        );
+    let should_stop = Arc::new(AtomicBool::new(false));
+    let stop_internal = Arc::clone(&should_stop);
 
-        usbffi::libusb_submit_transfer(transfer);
-    }
+    let timeout = libc::timeval {
+        tv_sec: 1,
+        tv_usec: 0,
+    };
 
-    let mut image = Vec::<u8>::with_capacity(0x40000);
+    thread::scope(|s| {
+        let thread_join_handle = s.spawn(|| loop {
+            if stop_internal.load(Ordering::Relaxed) {
+                println!("GOT STOP");
+                break;
+            }
+            unsafe {
+                usbffi::libusb_handle_events_timeout(
+                    handle.context().as_raw(),
+                    &timeout as *const libc::timeval,
+                );
+            }
 
-    let timeout = Duration::from_millis(100);
-    let mut in_buf = [0u8; 64];
+            let dur = time::Duration::from_millis(1);
+            thread::sleep(dur);
+        });
+
+        //let mut transfers = vec![];
+
+        for _n in 0..10 {
+            let mut in_buf = [0u8; 0x4000];
+            let transfer = Box::new(BulkTransfer::new(capture_handler.clone()));
+
+            let raw_transfer = Box::into_raw(transfer) as *mut c_void;
+
+            //transfers.push(transfer);
+
+            let lib_usb_transfer = unsafe { usbffi::libusb_alloc_transfer(0) };
+
+            // let user_data = Arc::into_raw(transfer.clone()) as *mut c_void;
+
+            unsafe {
+                usbffi::libusb_fill_bulk_transfer(
+                    lib_usb_transfer,
+                    handle.as_raw(),
+                    0x82,
+                    in_buf.as_mut_ptr(),
+                    0x4000,
+                    transfer_finished::<T> as _,
+                    raw_transfer,
+                    1000,
+                );
+
+                usbffi::libusb_submit_transfer(lib_usb_transfer);
+            }
+        }
+
+        loop {
+            let len = capture_handler.lock().unwrap().image.len();
+            //if len > 0x4000  * 80 {
+            if len > 327680 * 2 {
+                break;
+            }
+            println!("{}", len);
+            let ten_millis = time::Duration::from_millis(10);
+            thread::sleep(ten_millis);
+        }
+
+        println!("EXITING THREAD SCOPE");
+
+        should_stop.store(true, Ordering::Relaxed);
+
+        print!("TOLD THREAD WE'RE DONE");
+
+        println!("PARSING IMAGE");
+        parse_image_data(&capture_handler.lock().unwrap().image);
+        //thread_join_handle.join();
+
+        // for transfer in transfers {
+        //unsafe { usbffi::libusb_free_transfer(transfer.lib_usb_transfer); }
+        // }
+    });
+
+    // let timeout = Duration::from_millis(100);
+    //let mut in_buf = [0u8; 64];
 
     /*loop {
         match handle
@@ -309,39 +471,38 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>, file: &mut fs::File) {
         }
     }*/
 
-    let timeout = Duration::from_millis(50);
+    /*  let timeout = Duration::from_millis(50);
 
-    let mut test = 0;
-    let mut have_frame = false;
-    while test < 80 {
-        let mut buf = [0u8; 0x4000];
-        //let mut buf = BytesMut::with_capacity(0x40000);
+        let mut test = 0;
+        let mut have_frame = false;
+        while test < 80 {
+            let mut buf = [0u8; 0x4000];
+            //let mut buf = BytesMut::with_capacity(0x40000);
 
-        match handle.read_bulk(0x82, &mut buf, timeout) {
-            Ok(len) => {
-                //println!("{:02X?}", buf);
+            match handle.read_bulk(0x82, &mut buf, timeout) {
+                Ok(len) => {
+                    //println!("{:02X?}", buf);
+                }
+                Err(err) => {
+                    //println!("could not read from endpoint: {}", err);
+                    continue;
+                } //println!("could not read from endpoint: {}", err),
             }
-            Err(err) => {
-                //println!("could not read from endpoint: {}", err);
-                continue;
-            } //println!("could not read from endpoint: {}", err),
+
+            /*let size = handle
+            .read_bulk(0x82, &mut buf, timeout)
+            .expect("FAILED TO READ IMAGE DATA");*/
+
+            //println!("{}", size);
+
+            //handle.write_bulk(0x82, &buf, timeout);
+
+            test += 1;
+
+            image.write_all(&buf);
+            //image.extend_from_slice(&buf);
         }
-
-        /*let size = handle
-        .read_bulk(0x82, &mut buf, timeout)
-        .expect("FAILED TO READ IMAGE DATA");*/
-
-        //println!("{}", size);
-
-        //handle.write_bulk(0x82, &buf, timeout);
-
-        test += 1;
-
-        image.write_all(&buf);
-        //image.extend_from_slice(&buf);
-    }
-
-    parse_image_data(&image);
+    */
 
     //println!("{}", buf.len());
     //println!("{:02X?}", buf);

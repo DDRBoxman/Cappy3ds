@@ -2,7 +2,7 @@ pub struct State {
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
+    //config: wgpu::SurfaceConfiguration,
     //size: winit::dpi::PhysicalSize<u32>,
     // The window must be declared after the surface so
     // it gets dropped after it as the surface contains
@@ -137,7 +137,7 @@ impl State {
             surface,
             device,
             queue,
-            config,
+            // config,
             // size,
             render_pipeline,
         }
