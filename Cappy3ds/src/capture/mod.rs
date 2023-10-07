@@ -16,8 +16,9 @@ use rusb::{
     TransferType, UsbContext,
 };
 
-mod fx2;
 mod fpga;
+mod fx2;
+mod image;
 
 #[derive(RustEmbed)]
 #[folder = "resources/Katsukity/"]
@@ -65,9 +66,7 @@ pub fn do_capture() {
                     }
                     fpga::fifo_start(&mut handle);
 
-                    let mut file = fs::File::create("./image2.bin").expect("WHY NO FILE");
-
-                    bulk_read(&mut handle, &mut file);
+                    bulk_read(&mut handle);
                 }
                 None => println!("secondary device missing, firmware upload failed?"),
             }
@@ -121,38 +120,37 @@ extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::l
 
     let bulk_transfer = unsafe { user_data as *mut BulkTransfer };
 
-   unsafe { 
-    
-        let mut handler = (*bulk_transfer).capture_handler
-        .lock()
-        .unwrap();
+    unsafe {
+        let mut handler = (*bulk_transfer).capture_handler.lock().unwrap();
 
         if handler.buffers[handler.current_buffer].len() > 0x4000 {
             handler.current_buffer += 1;
         }
 
         if handler.current_buffer == NUM_BUFFERS {
-           // return;
+            // return;
         }
 
         let current_buffer = handler.current_buffer;
 
         handler.buffers[current_buffer].extend_from_slice(&ss);
-   }
 
-    unsafe { usbffi::libusb_submit_transfer(transfer_ptr) };
+        if !handler.should_stop.load(Ordering::Relaxed) {
+            usbffi::libusb_submit_transfer(transfer_ptr);
+        }
+    }
 }
 
 struct CaptureHandler {
     buffers: Vec<Vec<u8>>,
     current_buffer: usize,
+    should_stop: AtomicBool,
 }
 
-const NUM_BUFFERS: usize = 50;
+const NUM_BUFFERS: usize = 20;
 
 impl CaptureHandler {
     fn new() -> Self {
-
         let mut buffers = Vec::<Vec<u8>>::with_capacity(NUM_BUFFERS);
 
         for i in 0..NUM_BUFFERS {
@@ -161,7 +159,8 @@ impl CaptureHandler {
 
         Self {
             current_buffer: 0,
-            buffers
+            buffers,
+            should_stop: AtomicBool::new(false),
         }
     }
 }
@@ -182,7 +181,7 @@ impl BulkTransfer {
     }
 }
 
-fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>, file: &mut fs::File) {
+fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>) {
     println!("Starting Bulk Read");
 
     let capture_handler = Arc::new(Mutex::new(CaptureHandler::new()));
@@ -250,9 +249,16 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>, file: &mut fs::File) {
 
         println!("Stopping Capture");
 
+        capture_handler.lock().unwrap().should_stop.store(true, Ordering::Relaxed);
+
+        let ten_millis = time::Duration::from_millis(10);
+        thread::sleep(ten_millis);
+
         should_stop.store(true, Ordering::Relaxed);
 
         println!("Waiting on Stop");
+
+        thread::sleep(ten_millis);
 
         match thread_join_handle.join() {
             Ok(_) => println!("Thread OK"),
@@ -267,70 +273,14 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>, file: &mut fs::File) {
 
         for buffer in &handler.buffers {
             image.extend_from_slice(&buffer);
-        } 
+        }
 
-        parse_image_data(&image);
-        
+        image::parse_image_data(&image);
+
         // for transfer in transfers {
         //unsafe { usbffi::libusb_free_transfer(transfer.lib_usb_transfer); }
         // }
     });
-
-    // let timeout = Duration::from_millis(100);
-    //let mut in_buf = [0u8; 64];
-
-    /*loop {
-        match handle
-        .read_bulk(0x82, &mut in_buf, timeout) {
-            Ok(size) => {
-                println!("Cleared residual USB buffer of size {size}");
-            }
-            Err(err) => {
-                println!("could not read from endpoint: {}", err);
-                break;
-            }
-        }
-    }*/
-
-    /*  let timeout = Duration::from_millis(50);
-
-        let mut test = 0;
-        let mut have_frame = false;
-        while test < 80 {
-            let mut buf = [0u8; 0x4000];
-            //let mut buf = BytesMut::with_capacity(0x40000);
-
-            match handle.read_bulk(0x82, &mut buf, timeout) {
-                Ok(len) => {
-                    //println!("{:02X?}", buf);
-                }
-                Err(err) => {
-                    //println!("could not read from endpoint: {}", err);
-                    continue;
-                } //println!("could not read from endpoint: {}", err),
-            }
-
-            /*let size = handle
-            .read_bulk(0x82, &mut buf, timeout)
-            .expect("FAILED TO READ IMAGE DATA");*/
-
-            //println!("{}", size);
-
-            //handle.write_bulk(0x82, &buf, timeout);
-
-            test += 1;
-
-            image.write_all(&buf);
-            //image.extend_from_slice(&buf);
-        }
-    */
-
-    //println!("{}", buf.len());
-    //println!("{:02X?}", buf);
-
-    //if buf.len() > 16384 {
-    //file.write_all(&image);
-    //}
 
     // 33CC 23C0 1800 0000 0000 1900 0000 0000 (then 240 pixels of image)
     // 33CC 24C0 1900 0000 0000 1A00 0000 0000 (240)
@@ -338,66 +288,4 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>, file: &mut fs::File) {
     // 33CC 26C0 1C00 0000 0000 1D00 0000 0000
     // ...
     // 33CC 2EC1 0701 0000 0000 0801 0000 0000
-}
-
-fn parse_image_data(data: &Vec<u8>) {
-    let mut found_frames = 0;
-
-    let mut frame_iter = memmem::find_iter(&data, &[0x33, 0xCC, 0x00, 0x00]);
-    while let Some(frame_start) = frame_iter.next() {
-        //println!("{}", frame_start);
-
-        let mut out_buf = BytesMut::with_capacity(0x40000);
-
-        //let mut buf =  BytesMut::from(data.as_slice());
-        let thing = &data[frame_start + 3..];
-
-        let mut it = memmem::find_iter(&thing, &[0x33, 0xCC]);
-
-        while let Some(res) = it.next() {
-            /*if (thing[res + 2] == 0x90 ) {
-                break;
-            }*/
-            //println!("{}", res);
-            if res + (248 * 2) > thing.len() {
-                break;
-            }
-            out_buf.put(&thing[res..res + (248 * 2)])
-        }
-
-        let mut image_buffer = BytesMut::with_capacity(0x40000);
-        image_buffer.resize((out_buf.len() / 2 * 3), 0);
-
-        let mut j = 0;
-        for i in (0..out_buf.len()).step_by(2) {
-            let high = (out_buf[i + 1] as u16) << 8;
-            let c: u16 = out_buf[i] as u16 + high;
-            let r = (((c & 0xF800) >> 11) << 3) as u8;
-            let g = (((c & 0x7E0) >> 5) << 2) as u8;
-            let b = ((c & 0x1F) << 3) as u8;
-
-            image_buffer[j] = r;
-            j += 1;
-            image_buffer[j] = g;
-            j += 1;
-            image_buffer[j] = b;
-            j += 1;
-        }
-
-        use image::{ImageBuffer, Rgb};
-        let buffer = ImageBuffer::<Rgb<u8>, _>::from_raw(
-            248,
-            (out_buf.len() / 2 / 248).try_into().unwrap(),
-            image_buffer,
-        )
-        .unwrap();
-
-        buffer.save(format!("./test_{}.png", found_frames));
-
-        //let mut file = fs::File::create(format!("./test_{}.bin", found_frames)).expect("WHY NO FILE");
-
-        //file.write_all(&out_buf);
-
-        found_frames += 1;
-    }
 }

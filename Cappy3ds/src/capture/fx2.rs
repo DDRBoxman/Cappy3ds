@@ -1,9 +1,7 @@
 use std::time::Duration;
 extern crate libusb1_sys as usbffi;
 
-use rusb::{
-    DeviceHandle, Direction, Recipient, RequestType, UsbContext,
-};
+use rusb::{DeviceHandle, Direction, Recipient, RequestType, UsbContext};
 
 pub(crate) fn send_firmware<T: UsbContext>(handle: &mut DeviceHandle<T>, firmware: Vec<u8>) {
     let timeout = Duration::from_secs(1);

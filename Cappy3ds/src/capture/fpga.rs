@@ -2,9 +2,7 @@ use std::time::Duration;
 use std::{thread, time};
 extern crate libusb1_sys as usbffi;
 
-use rusb::{
-    DeviceHandle, UsbContext,
-};
+use rusb::{DeviceHandle, UsbContext};
 
 pub fn read_eeprom<T: UsbContext>(handle: &mut DeviceHandle<T>) {
     let timeout = Duration::from_secs(1);
