@@ -1,13 +1,6 @@
-#include <cstdarg>
-#include <cstdint>
-#include <cstdlib>
-#include <ostream>
-#include <new>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
 
-extern "C" {
-
-void hello_world();
-
-void send_window(void *appKitNSView);
-
-} // extern "C"
+void send_window(void *app_kit_nsview);
