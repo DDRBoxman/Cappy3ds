@@ -14,12 +14,22 @@ pub fn parse_image_data(data: &Vec<u8>) {
         //let mut buf =  BytesMut::from(data.as_slice());
         let thing = &data[frame_start + 3..];
 
-        let mut it = memmem::find_iter(&thing, &[0x33, 0xCC]);
+        
+
+       // let mut it = memmem::find(&thing, &[0x33, 0xCC]);
+    //if let Some(res) = it {
+       // out_buf.put(&thing[res..res + (720 * 248 * 2)]);
+       let mut it = memmem::find_iter(&thing, &[0x33, 0xCC]);
 
         while let Some(res) = it.next() {
-            /*if (thing[res + 2] == 0x90 ) {
+            /*if (thing[res + 2] == 0x90) {
                 break;
             }*/
+
+            // Next image is here
+             if thing[res + 2] == 0x00 && thing[res + 3] == 0x00 {
+                break;
+            }
             //println!("{}", res);
             if res + (248 * 2) > thing.len() {
                 break;
@@ -27,8 +37,8 @@ pub fn parse_image_data(data: &Vec<u8>) {
             out_buf.put(&thing[res..res + (248 * 2)])
         }
 
-        let mut image_buffer = BytesMut::with_capacity(0x40000);
-        image_buffer.resize((out_buf.len() / 2 * 3), 0);
+        let mut image_buffer = BytesMut::with_capacity(720 * 248 * 2);
+        image_buffer.resize(out_buf.len() / 2 * 3, 0);
 
         let mut j = 0;
         for i in (0..out_buf.len()).step_by(2) {
@@ -61,5 +71,7 @@ pub fn parse_image_data(data: &Vec<u8>) {
         //file.write_all(&out_buf);
 
         found_frames += 1;
+   // }   
+             
     }
 }

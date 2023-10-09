@@ -58,12 +58,15 @@ pub fn do_capture() {
                         Err(err) => panic!("could not claim second device: {}", err),
                     }
 
-                    if fpga::check_fpga_programmed(&mut handle) {
-                    } else {
+
+                    // bleh apparently relesase runs fast enough to break this
+                    // add in some sleeps
+                    //if fpga::check_fpga_programmed(&mut handle) {
+                    //} else {
                         fpga::read_eeprom(&mut handle);
                         fpga::configure_fpga(&mut handle, bitstream.data.to_vec());
-                        fpga::configure_port(&mut handle);
-                    }
+                   // }
+                    fpga::configure_port(&mut handle);
                     fpga::fifo_start(&mut handle);
 
                     bulk_read(&mut handle);
@@ -114,28 +117,54 @@ extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::l
 
     let buf = transfer.buffer;
 
-    let s = unsafe { slice::from_raw_parts(buf, 0x4000) };
-    let mut ss = [0; 0x4000];
+    let s = unsafe { slice::from_raw_parts(buf, TRANSFER_SIZE) };
+    /*let mut ss = [0; TRANSFER_SIZE];
     ss.copy_from_slice(s);
 
-    let bulk_transfer = unsafe { user_data as *mut BulkTransfer };
+    println!("{:?}", ss);*/
 
-    unsafe {
-        let mut handler = (*bulk_transfer).capture_handler.lock().unwrap();
+    let start = memmem::find(s, &[0x33, 0xCC, 0x00, 0x00]);
 
-        if handler.buffers[handler.current_buffer].len() > 0x4000 {
+    let bulk_transfer = user_data as *mut BulkTransfer;
+
+    let mut handler = unsafe { (*bulk_transfer).capture_handler.lock().unwrap() };
+
+    let current_buffer = handler.current_buffer;
+    let frame_buffer_len = handler.buffers[current_buffer].len();
+    //let buffer_pos = handler.buffer_pos;
+
+    let mut local_offset = 0;
+    let mut local_end = TRANSFER_SIZE;
+    
+     if let Some(start) = start {
+        if frame_buffer_len == 0 {
+            local_offset = start;
+        } else {
+            local_end = start;
+        }
+    }
+
+    handler.buffers[current_buffer].extend(&s[local_offset..local_end]);
+
+    //handler.buffer_pos = handler.buffer_pos + s.len();
+
+    if let Some(start) = start {
+        if frame_buffer_len > 0 {
+            //println!("{:}", frame_buffer_len);
             handler.current_buffer += 1;
+            if handler.current_buffer >= NUM_BUFFERS {
+                handler.current_buffer = 0;
+            }
+
+            let current_buffer = handler.current_buffer;
+
+            handler.buffers[current_buffer].clear();
+            handler.buffers[current_buffer].extend(&s[start..]);
         }
+    }
 
-        if handler.current_buffer == NUM_BUFFERS {
-            // return;
-        }
-
-        let current_buffer = handler.current_buffer;
-
-        handler.buffers[current_buffer].extend_from_slice(&ss);
-
-        if !handler.should_stop.load(Ordering::Relaxed) {
+    if !handler.should_stop.load(Ordering::Relaxed) {
+        unsafe {
             usbffi::libusb_submit_transfer(transfer_ptr);
         }
     }
@@ -144,20 +173,32 @@ extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::l
 struct CaptureHandler {
     buffers: Vec<Vec<u8>>,
     current_buffer: usize,
+    new_frame: bool,
     should_stop: AtomicBool,
 }
 
 const NUM_BUFFERS: usize = 20;
+
+// Top + Bottom width
+// 400 + 320 = 720
+// height + audio data
+// 240 + 8
+// RGB565
+// 2 bytes per pixel
+const FRAM_BUFFER_SIZE: usize = 720 * 248 * 2;
+
+const TRANSFER_SIZE: usize = 0x4000;
 
 impl CaptureHandler {
     fn new() -> Self {
         let mut buffers = Vec::<Vec<u8>>::with_capacity(NUM_BUFFERS);
 
         for i in 0..NUM_BUFFERS {
-            buffers.push(Vec::<u8>::with_capacity(0x4000 * 2));
+            buffers.push(Vec::<u8>::with_capacity(FRAM_BUFFER_SIZE));
         }
 
         Self {
+            new_frame: false,
             current_buffer: 0,
             buffers,
             should_stop: AtomicBool::new(false),
@@ -211,7 +252,7 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>) {
         //let mut transfers = vec![];
 
         for _n in 0..10 {
-            let mut in_buf = [0u8; 0x4000];
+            let mut in_buf = [0u8; TRANSFER_SIZE];
             let transfer = Box::new(BulkTransfer::new(capture_handler.clone()));
 
             let raw_transfer = Box::into_raw(transfer) as *mut c_void;
@@ -228,7 +269,7 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>) {
                     handle.as_raw(),
                     0x82,
                     in_buf.as_mut_ptr(),
-                    0x4000,
+                    TRANSFER_SIZE.try_into().unwrap(),
                     transfer_finished::<T> as _,
                     raw_transfer,
                     1000,
@@ -249,7 +290,11 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>) {
 
         println!("Stopping Capture");
 
-        capture_handler.lock().unwrap().should_stop.store(true, Ordering::Relaxed);
+        capture_handler
+            .lock()
+            .unwrap()
+            .should_stop
+            .store(true, Ordering::Relaxed);
 
         let ten_millis = time::Duration::from_millis(10);
         thread::sleep(ten_millis);
