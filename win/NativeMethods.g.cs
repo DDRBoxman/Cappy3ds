@@ -16,8 +16,8 @@ namespace CsBindgen
 
 
 
-        [DllImport(__DllName, EntryPoint = "send_visual", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void send_visual(void* panel, delegate* unmanaged[Cdecl]<void*, void*, int> callback);
+        [DllImport(__DllName, EntryPoint = "send_swap_chain_panel", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void send_swap_chain_panel(void* swap_chain_panel);
 
         [DllImport(__DllName, EntryPoint = "send_window", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void send_window(void* app_kit_nsview);

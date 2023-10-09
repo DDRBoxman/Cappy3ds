@@ -17,9 +17,11 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using WinRT;
+using static Cappy3ds.MainWindow;
 
 
 
@@ -49,8 +51,12 @@ namespace Cappy3ds
             unsafe
             {
 
-          
-                CsBindgen.NativeMethods.send_visual((void*)((IWinRTObject)swapChainPanel1).NativeObject.GetRef(), &Sum);
+
+                // var nativePanel = swapChainPanel1.As<ISwapChainPanelNative>();
+
+                IntPtr objectAddress = Marshal.GetComInterfaceForObject(swapChainPanel1, typeof(ISwapChainPanelNative));
+
+                CsBindgen.NativeMethods.send_swap_chain_panel((void*)objectAddress);
             }
 
             // renderView.setup();

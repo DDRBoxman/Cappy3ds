@@ -5,7 +5,7 @@ use raw_window_handle::{
     RawDisplayHandle, RawWindowHandle, WindowsDisplayHandle,
 };
 use std::ffi;
-use wgpu_hal;
+
 
 mod dsscreen;
 mod primitive;
@@ -17,31 +17,11 @@ pub use render::State;
 
 #[no_mangle]
 #[cfg(target_os = "windows")]
-pub extern "C" fn send_visual(panel: *mut ffi::c_void, callback: extern "C" fn( *mut ffi::c_void, *mut ffi::c_void) -> i32) {
-    use wgpu::Surface;
-
-    let mut res = State::new_from_visual();
+pub extern "C" fn send_swap_chain_panel(swap_chain_panel: *mut ffi::c_void) {
+    let mut res = State::new_from_swap_chain_panel(swap_chain_panel);
     let mut v = executor::block_on(res);
 
-    unsafe {
-        v.surface
-            .as_hal_mut::<wgpu_hal::dx12::Api, _, _>(|surface| {
-                match surface {
-                    Some(surface) => {
-                        match &surface.swap_chain {
-                            Some(chain) => {
-                                callback(panel, chain.raw.as_mut_ptr() as *mut ffi::c_void);
-                            }
-                            None => todo!(),
-                        }
-                        
-                    },
-                    None => todo!(),
-                }
-            })
-    };
-
-     v.render();
+    v.render();
 }
 
 #[no_mangle]
