@@ -32,7 +32,6 @@ struct RenderView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSView {
         let tmp = NSView()
-        hello_world()
         
         send_window(Unmanaged.passUnretained(tmp).toOpaque())
         
