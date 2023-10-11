@@ -58,14 +58,13 @@ pub fn do_capture() {
                         Err(err) => panic!("could not claim second device: {}", err),
                     }
 
-
                     // bleh apparently relesase runs fast enough to break this
                     // add in some sleeps
                     //if fpga::check_fpga_programmed(&mut handle) {
                     //} else {
-                        fpga::read_eeprom(&mut handle);
-                        fpga::configure_fpga(&mut handle, bitstream.data.to_vec());
-                   // }
+                    fpga::read_eeprom(&mut handle);
+                    fpga::configure_fpga(&mut handle, bitstream.data.to_vec());
+                    // }
                     fpga::configure_port(&mut handle);
                     fpga::fifo_start(&mut handle);
 
@@ -118,10 +117,6 @@ extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::l
     let buf = transfer.buffer;
 
     let s = unsafe { slice::from_raw_parts(buf, TRANSFER_SIZE) };
-    /*let mut ss = [0; TRANSFER_SIZE];
-    ss.copy_from_slice(s);
-
-    println!("{:?}", ss);*/
 
     let start = memmem::find(s, &[0x33, 0xCC, 0x00, 0x00]);
 
@@ -135,31 +130,34 @@ extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::l
 
     let mut local_offset = 0;
     let mut local_end = TRANSFER_SIZE;
-    
-     if let Some(start) = start {
+    let mut wait = false;
+
+    if let Some(start) = start {
         if frame_buffer_len == 0 {
             local_offset = start;
         } else {
             local_end = start;
         }
+    } else if frame_buffer_len == 0 {
+        wait = true;
     }
 
-    handler.buffers[current_buffer].extend(&s[local_offset..local_end]);
+    if !wait {
+        handler.buffers[current_buffer].extend(&s[local_offset..local_end]);
 
-    //handler.buffer_pos = handler.buffer_pos + s.len();
+        if let Some(start) = start {
+            if frame_buffer_len > 0 {
+                //println!("{:}", frame_buffer_len);
+                handler.current_buffer += 1;
+                if handler.current_buffer >= NUM_BUFFERS {
+                    handler.current_buffer = 0;
+                }
 
-    if let Some(start) = start {
-        if frame_buffer_len > 0 {
-            //println!("{:}", frame_buffer_len);
-            handler.current_buffer += 1;
-            if handler.current_buffer >= NUM_BUFFERS {
-                handler.current_buffer = 0;
+                let current_buffer = handler.current_buffer;
+
+                handler.buffers[current_buffer].clear();
+                handler.buffers[current_buffer].extend(&s[start..]);
             }
-
-            let current_buffer = handler.current_buffer;
-
-            handler.buffers[current_buffer].clear();
-            handler.buffers[current_buffer].extend(&s[start..]);
         }
     }
 

@@ -81,7 +81,7 @@ pub fn configure_fpga<T: UsbContext>(handle: &mut DeviceHandle<T>, bitstream: Ve
         // "71038f9db726685e014f0800000230ff6065", //888
         "64600200ff00ff600230ff60c2600120ff",
         "6107000f003e00f800100056800a0100", // 565
-         // "6107008f003c00f200380056800a0100" //888
+                                            // "6107008f003c00f200380056800a0100" //888
     ];
 
     for command in end_commands {
