@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cappy3ds = { path = "../Cappy3ds" }
+cappy3ds_render = { path = "../cappy3ds_render" }
 winit = "0.28"
 env_logger = "0.10"
 log = "0.4"

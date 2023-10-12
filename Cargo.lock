@@ -257,21 +257,27 @@ dependencies = [
 name = "cappy3ds"
 version = "0.1.0"
 dependencies = [
- "bytemuck",
  "bytes",
- "env_logger",
- "futures",
  "hex",
  "image",
  "itertools",
  "libc",
  "libusb1-sys",
- "log",
  "memchr",
- "nom",
- "raw-window-handle",
  "rusb",
  "rust-embed",
+]
+
+[[package]]
+name = "cappy3ds_render"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "env_logger",
+ "futures",
+ "image",
+ "log",
+ "raw-window-handle",
  "wgpu",
 ]
 
@@ -1658,7 +1664,7 @@ checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 name = "simple_win"
 version = "0.1.0"
 dependencies = [
- "cappy3ds",
+ "cappy3ds_render",
  "env_logger",
  "log",
  "winit",

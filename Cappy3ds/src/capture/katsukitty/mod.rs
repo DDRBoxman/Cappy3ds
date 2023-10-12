@@ -61,12 +61,12 @@ pub fn do_capture() {
 
                     // bleh apparently relesase runs fast enough to break this
                     // add in some sleeps
-                    if fpga::check_fpga_programmed(&mut handle) {
-                    } else {
+                    //if fpga::check_fpga_programmed(&mut handle) {
+                    //} else {
                         fpga::read_eeprom(&mut handle);
                         fpga::configure_fpga(&mut handle, bitstream.data.to_vec());
                         fpga::configure_port(&mut handle);
-                    }
+                    //}
 
                     fpga::fifo_start(&mut handle);
 

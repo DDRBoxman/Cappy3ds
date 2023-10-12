@@ -4,14 +4,14 @@ use winit::{
     window::WindowBuilder,
 };
 
-use cappy3ds;
+use cappy3ds_render;
 
 pub fn run() {
     env_logger::init();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
-    cappy3ds::send_raw_window(&window);
+    cappy3ds_render::send_raw_window(&window);
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {

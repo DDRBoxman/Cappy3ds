@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
-    "Cappy3ds",
+    "cappy3ds",
+    "cappy3ds_render",
     "simple_win"
 ]
