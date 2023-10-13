@@ -1,20 +1,15 @@
-use bytes::{buf, Buf, BufMut, BytesMut};
 use memchr::memmem;
 use rust_embed::RustEmbed;
 use std::ffi::c_void;
-use std::io::Write;
-use std::ptr;
+use std::slice;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
-use std::{ffi, fs, path, slice};
 use std::{thread, time};
 extern crate libusb1_sys as usbffi;
+use bytes::BytesMut;
+use simple_error::SimpleError;
 
-use rusb::{
-    Context, Device, DeviceDescriptor, DeviceHandle, Direction, Recipient, RequestType, Result,
-    TransferType, UsbContext,
-};
+use rusb::{Device, DeviceDescriptor, DeviceHandle, UsbContext};
 
 mod fpga;
 mod fx2;
@@ -25,57 +20,56 @@ mod parse;
 #[folder = "resources/Katsukity/"]
 struct Katsukity;
 
-pub fn do_capture() {
+pub fn connect<T: UsbContext>(context: &mut T) -> Result<DeviceHandle<T>, SimpleError> {
     let firmware = Katsukity::get("firm.bin").unwrap();
     let bitstream = Katsukity::get("bitstream.bin").unwrap();
 
     let vid = 0x0752;
     let pid = 0x8613;
 
-    match Context::new() {
-        Ok(mut context) => {
-            let mut flashed_fx2 = false;
-            match open_device(&mut context, vid, pid) {
-                Some((mut device, device_desc, mut handle)) => {
-                    println!("Opened {:04x}:{:04x}", vid, pid);
-                    fx2::send_firmware(&mut handle, firmware.data.to_vec());
-                    flashed_fx2 = true;
-                }
-                None => println!("could not find FX2 device {:04x}:{:04x}", vid, pid),
-            }
-
-            if flashed_fx2 {
-                println!("Waiting for second interface");
-                let sleep_time = time::Duration::from_millis(5000);
-                thread::sleep(sleep_time);
-                // todo: loop with device check instead of sleeping
-            }
-
-            match open_device(&mut context, 0x0752, 0xf2c0) {
-                Some((mut device, device_desc, mut handle)) => {
-                    println!("Opened secondary device");
-                    match handle.claim_interface(0) {
-                        Ok(_) => {}
-                        Err(err) => panic!("could not claim second device: {}", err),
-                    }
-
-                    // bleh apparently relesase runs fast enough to break this
-                    // add in some sleeps
-                    //if fpga::check_fpga_programmed(&mut handle) {
-                    //} else {
-                        fpga::read_eeprom(&mut handle);
-                        fpga::configure_fpga(&mut handle, bitstream.data.to_vec());
-                        fpga::configure_port(&mut handle);
-                    //}
-
-                    fpga::fifo_start(&mut handle);
-
-                    bulk_read(&mut handle);
-                }
-                None => println!("secondary device missing, firmware upload failed?"),
-            }
+    let mut flashed_fx2 = false;
+    match open_device(context, vid, pid) {
+        Some((mut device, device_desc, mut handle)) => {
+            println!("Opened {:04x}:{:04x}", vid, pid);
+            fx2::send_firmware(&mut handle, firmware.data.to_vec());
+            flashed_fx2 = true;
         }
-        Err(e) => panic!("could not initialize libusb: {}", e),
+        None => {
+            println!("could not find FX2 device");
+        }
+    }
+
+    if flashed_fx2 {
+        println!("Waiting for second interface");
+        let sleep_time = time::Duration::from_millis(5000);
+        thread::sleep(sleep_time);
+        // todo: loop with device check instead of sleeping
+    }
+
+    match open_device(context, 0x0752, 0xf2c0) {
+        Some((mut device, device_desc, mut handle)) => {
+            println!("Opened secondary device");
+            match handle.claim_interface(0) {
+                Ok(_) => {}
+                Err(err) => panic!("could not claim second device: {}", err),
+            }
+
+            // bleh apparently relesase runs fast enough to break this
+            // add in some sleeps
+            //if fpga::check_fpga_programmed(&mut handle) {
+            //} else {
+            fpga::read_eeprom(&mut handle);
+            fpga::configure_fpga(&mut handle, bitstream.data.to_vec());
+            fpga::configure_port(&mut handle);
+            //}
+
+            fpga::fifo_start(&mut handle);
+
+            Ok(handle)
+        }
+        None => Err(SimpleError::new(
+            "secondary device missing, firmware upload failed?",
+        )),
     }
 }
 
@@ -106,7 +100,17 @@ fn open_device<T: UsbContext>(
     None
 }
 
-extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::libusb_transfer) {
+pub fn do_capture<T: UsbContext, F>(handle: &mut DeviceHandle<T>, data_callback: F)
+where
+    F: Fn(&[i16], BytesMut, BytesMut),
+{
+    bulk_read(handle, data_callback);
+}
+
+extern "system" fn transfer_finished<T: UsbContext, F>(transfer_ptr: *mut usbffi::libusb_transfer)
+where
+    F: Fn(&[i16], BytesMut, BytesMut),
+{
     let transfer: &mut usbffi::libusb_transfer = unsafe { &mut *transfer_ptr };
 
     let user_data = transfer.user_data;
@@ -122,9 +126,9 @@ extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::l
 
     let start = memmem::find(s, &[0x33, 0xCC, 0x00, 0x00]);
 
-    let bulk_transfer = user_data as *mut BulkTransfer;
+    let handler = user_data as *mut Arc<Mutex<CaptureHandler<F>>>;
 
-    let mut handler = unsafe { (*bulk_transfer).capture_handler.lock().unwrap() };
+    let mut handler = unsafe { (*handler).lock().unwrap() };
 
     let current_buffer = handler.current_buffer;
     let frame_buffer_len = handler.buffers[current_buffer].len();
@@ -140,15 +144,28 @@ extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::l
             local_end = start;
         }
     } else if frame_buffer_len == 0 {
+        // Wait for us to get the frame start code
         wait = true;
     }
 
+    // if we don't need to wait for a new frame to start
     if !wait {
+        // Move the data into the frame buffer
         handler.buffers[current_buffer].extend(&s[local_offset..local_end]);
 
         if let Some(start) = start {
             if frame_buffer_len > 0 {
-                //println!("{:}", frame_buffer_len);
+                // parse since we have a frame
+                let (upper_buffer, lower_buffer, sound_buffer) =
+                    parse::split_capture_buffer(&handler.buffers[current_buffer]);
+
+                let (_, short, _) = unsafe { sound_buffer.align_to::<i16>() };
+                (handler.data_callback)(
+                    short,
+                    parse::rgb565_to_rgb(&upper_buffer),
+                    parse::rgb565_to_rgb(&lower_buffer),
+                );
+
                 handler.current_buffer += 1;
                 if handler.current_buffer >= NUM_BUFFERS {
                     handler.current_buffer = 0;
@@ -169,11 +186,13 @@ extern "system" fn transfer_finished<T: UsbContext>(transfer_ptr: *mut usbffi::l
     }
 }
 
-struct CaptureHandler {
-    buffers: Vec<Vec<u8>>,
+#[derive(Debug)]
+struct CaptureHandler<F> {
+    buffers: Vec<BytesMut>,
     current_buffer: usize,
     new_frame: bool,
     should_stop: AtomicBool,
+    data_callback: F,
 }
 
 const NUM_BUFFERS: usize = 20;
@@ -188,12 +207,15 @@ const FRAM_BUFFER_SIZE: usize = 720 * 248 * 2;
 
 const TRANSFER_SIZE: usize = 0x4000;
 
-impl CaptureHandler {
-    fn new() -> Self {
-        let mut buffers = Vec::<Vec<u8>>::with_capacity(NUM_BUFFERS);
+impl<F> CaptureHandler<F>
+where
+    F: Fn(&[i16], BytesMut, BytesMut),
+{
+    fn new(data_callback: F) -> Self {
+        let mut buffers = Vec::<BytesMut>::with_capacity(NUM_BUFFERS);
 
         for i in 0..NUM_BUFFERS {
-            buffers.push(Vec::<u8>::with_capacity(FRAM_BUFFER_SIZE));
+            buffers.push(BytesMut::with_capacity(FRAM_BUFFER_SIZE));
         }
 
         Self {
@@ -201,30 +223,18 @@ impl CaptureHandler {
             current_buffer: 0,
             buffers,
             should_stop: AtomicBool::new(false),
+            data_callback,
         }
     }
 }
 
-struct BulkTransfer {
-    //lib_usb_transfer: *mut usbffi::libusb_transfer,
-    capture_handler: Arc<Mutex<CaptureHandler>>,
-}
-
-impl BulkTransfer {
-    fn new(capture_handler: Arc<Mutex<CaptureHandler>>) -> Self {
-        /*  let transfer;
-        unsafe {
-           // transfer = usbffi::libusb_alloc_transfer(0);
-        }*/
-
-        Self { capture_handler }
-    }
-}
-
-fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>) {
+fn bulk_read<T: UsbContext, F>(handle: &mut DeviceHandle<T>, data_callback: F)
+where
+    F: Fn(&[i16], BytesMut, BytesMut),
+{
     println!("Starting Bulk Read");
 
-    let capture_handler = Arc::new(Mutex::new(CaptureHandler::new()));
+    let capture_handler = Arc::new(Mutex::new(CaptureHandler::new(data_callback)));
 
     let should_stop = Arc::new(AtomicBool::new(false));
     let stop_internal = Arc::clone(&should_stop);
@@ -252,9 +262,9 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>) {
 
         for _n in 0..10 {
             let mut in_buf = [0u8; TRANSFER_SIZE];
-            let transfer = Box::new(BulkTransfer::new(capture_handler.clone()));
+            let capture_handler = Box::new(capture_handler.clone());
 
-            let raw_transfer = Box::into_raw(transfer) as *mut c_void;
+            let raw_transfer = Box::into_raw(capture_handler) as *mut c_void;
 
             //transfers.push(transfer);
 
@@ -269,7 +279,7 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>) {
                     0x82,
                     in_buf.as_mut_ptr(),
                     TRANSFER_SIZE.try_into().unwrap(),
-                    transfer_finished::<T> as _,
+                    transfer_finished::<T, F> as _,
                     raw_transfer,
                     1000,
                 );
@@ -281,7 +291,7 @@ fn bulk_read<T: UsbContext>(handle: &mut DeviceHandle<T>) {
         loop {
             let current_buffer = capture_handler.lock().unwrap().current_buffer;
             if current_buffer >= NUM_BUFFERS - 10 {
-                break;
+                //break;
             }
             //let ten_millis = time::Duration::from_millis(1);
             //thread::sleep(ten_millis);

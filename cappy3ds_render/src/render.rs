@@ -1,3 +1,6 @@
+use bytes::BytesMut;
+use cappy3ds;
+use image::{DynamicImage, ImageBuffer, Rgb, Rgba};
 use wgpu::util::DeviceExt;
 
 const VERTICES: &[Vertex] = &[
@@ -37,6 +40,8 @@ pub struct State {
     num_indices: u32,
     render_pipeline: wgpu::RenderPipeline,
     diffuse_bind_group: wgpu::BindGroup,
+
+    diffuse_texture: wgpu::Texture,
 }
 
 #[repr(C)]
@@ -151,7 +156,7 @@ impl State {
 
         let num_indices = INDICES.len() as u32;
 
-        let diffuse_bytes = include_bytes!("../resources/test/katsu_example_image.png");
+        let diffuse_bytes = include_bytes!("../resources/test/upper_5.png");
         let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
         let diffuse_rgba = diffuse_image.to_rgba8();
 
@@ -326,6 +331,7 @@ impl State {
             index_buffer,
             num_indices,
             diffuse_bind_group,
+            diffuse_texture,
         }
     }
 
@@ -337,7 +343,43 @@ impl State {
         todo!()
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn write_texture(&self, buffer: &BytesMut) {
+        let output_data = buffer
+            .chunks_exact(3)
+            .flat_map(|s| [s[0], s[1], s[2], 11])
+            .collect();
+
+        let result = ImageBuffer::<Rgba<u8>, _>::from_raw(240, 400, output_data);
+
+        let diffuse_rgba = DynamicImage::ImageRgba8(result.unwrap()).to_rgba8();
+
+        let texture_size = wgpu::Extent3d {
+            width: 240,
+            height: 400,
+            depth_or_array_layers: 1,
+        };
+
+        self.queue.write_texture(
+            // Tells wgpu where to copy the pixel data
+            wgpu::ImageCopyTexture {
+                texture: &self.diffuse_texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            // The actual pixel data
+            &diffuse_rgba,
+            // The layout of the texture
+            wgpu::ImageDataLayout {
+                offset: 0,
+                bytes_per_row: Some(4 * 240),
+                rows_per_image: Some(400),
+            },
+            texture_size,
+        );
+    }
+
+    pub fn render(&self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
 
         let view = output
