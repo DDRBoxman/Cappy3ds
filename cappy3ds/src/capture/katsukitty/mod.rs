@@ -102,14 +102,14 @@ fn open_device<T: UsbContext>(
 
 pub fn do_capture<T: UsbContext, F>(handle: &mut DeviceHandle<T>, data_callback: F)
 where
-    F: Fn(&[i16], BytesMut, BytesMut),
+    F: FnMut(&[i16], BytesMut, BytesMut),
 {
     bulk_read(handle, data_callback);
 }
 
 extern "system" fn transfer_finished<T: UsbContext, F>(transfer_ptr: *mut usbffi::libusb_transfer)
 where
-    F: Fn(&[i16], BytesMut, BytesMut),
+    F: FnMut(&[i16], BytesMut, BytesMut),
 {
     let transfer: &mut usbffi::libusb_transfer = unsafe { &mut *transfer_ptr };
 
@@ -162,8 +162,8 @@ where
                 let (_, short, _) = unsafe { sound_buffer.align_to::<i16>() };
                 (handler.data_callback)(
                     short,
-                    parse::rgb565_to_rgb(&upper_buffer),
-                    parse::rgb565_to_rgb(&lower_buffer),
+                    parse::rgb565_to_rgba(&upper_buffer),
+                    parse::rgb565_to_rgba(&lower_buffer),
                 );
 
                 handler.current_buffer += 1;
@@ -209,7 +209,7 @@ const TRANSFER_SIZE: usize = 0x4000;
 
 impl<F> CaptureHandler<F>
 where
-    F: Fn(&[i16], BytesMut, BytesMut),
+    F: FnMut(&[i16], BytesMut, BytesMut),
 {
     fn new(data_callback: F) -> Self {
         let mut buffers = Vec::<BytesMut>::with_capacity(NUM_BUFFERS);
@@ -230,7 +230,7 @@ where
 
 fn bulk_read<T: UsbContext, F>(handle: &mut DeviceHandle<T>, data_callback: F)
 where
-    F: Fn(&[i16], BytesMut, BytesMut),
+    F: FnMut(&[i16], BytesMut, BytesMut),
 {
     println!("Starting Bulk Read");
 
@@ -289,10 +289,10 @@ where
         }
 
         loop {
-            let current_buffer = capture_handler.lock().unwrap().current_buffer;
-            if current_buffer >= NUM_BUFFERS - 10 {
-                //break;
-            }
+            //let current_buffer = capture_handler.lock().unwrap().current_buffer;
+            //if current_buffer >= NUM_BUFFERS - 10 {
+            //break;
+            //}
             //let ten_millis = time::Duration::from_millis(1);
             //thread::sleep(ten_millis);
         }

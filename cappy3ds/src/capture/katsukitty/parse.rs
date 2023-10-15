@@ -63,3 +63,28 @@ pub fn rgb565_to_rgb(data: &BytesMut) -> BytesMut {
 
     image_buffer
 }
+
+pub fn rgb565_to_rgba(data: &BytesMut) -> BytesMut {
+    let mut image_buffer = BytesMut::with_capacity(data.len() / 2 * 4);
+    image_buffer.resize(data.len() / 2 * 4, 0);
+
+    let mut j = 0;
+    for i in (0..data.len()).step_by(2) {
+        let high = (data[i + 1] as u16) << 8;
+        let c: u16 = data[i] as u16 + high;
+        let r = (((c & 0xF800) >> 11) << 3) as u8;
+        let g = (((c & 0x7E0) >> 5) << 2) as u8;
+        let b = ((c & 0x1F) << 3) as u8;
+
+        image_buffer[j] = r;
+        j += 1;
+        image_buffer[j] = g;
+        j += 1;
+        image_buffer[j] = b;
+        j += 1;
+        image_buffer[j] = 0;
+        j += 1;
+    }
+
+    image_buffer
+}

@@ -11,12 +11,9 @@ pub struct Cappy3ds<F> {
 
 impl<F> Cappy3ds<F>
 where
-    F: Fn(&[i16], BytesMut, BytesMut),
+    F: FnMut(&[i16], BytesMut, BytesMut),
 {
-    pub fn new(data_callback: F) -> Self
-    where
-        F: Fn(&[i16], BytesMut, BytesMut),
-    {
+    pub fn new(data_callback: F) -> Self {
         Self {
             data_callback,
             usb_context: None,
