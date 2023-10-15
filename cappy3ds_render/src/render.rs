@@ -16,7 +16,8 @@ pub struct State {
     // it gets dropped after it as the surface contains
     // unsafe references to the window's resources.
     //window: Window,
-    ds_screen: DSScreen,
+    ds_screen_upper: DSScreen,
+    ds_screen_lower: DSScreen,
 }
 
 impl State {
@@ -84,14 +85,38 @@ impl State {
         };
         surface.configure(&device, &config);
 
-        let ds_screen = DSScreen::new(&device, surface_format);
-        ds_screen.update_textures(&queue);
+        let diffuse_bytes = include_bytes!("../resources/test/upper_5.png");
+        let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
+        let diffuse_rgba = diffuse_image.to_rgba8();
+        let mut ds_screen_upper = DSScreen::new(
+            &device,
+            surface_format,
+            240,
+            400,
+            diffuse_rgba.as_raw().as_slice(),
+        );
+        ds_screen_upper.update_textures(&queue);
+        ds_screen_upper.set_position(&queue, 0, 0);
+
+        let diffuse_bytes = include_bytes!("../resources/test/lower_wow.png");
+        let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
+        let diffuse_rgba = diffuse_image.to_rgba8();
+        let mut ds_screen_lower = DSScreen::new(
+            &device,
+            surface_format,
+            240,
+            320,
+            diffuse_rgba.as_raw().as_slice(),
+        );
+        ds_screen_lower.update_textures(&queue);
+        ds_screen_lower.set_position(&queue, 40, 240);
 
         Self {
             surface,
             device,
             queue,
-            ds_screen,
+            ds_screen_upper,
+            ds_screen_lower,
         }
     }
 
@@ -128,7 +153,8 @@ impl State {
             });
         }
 
-        self.ds_screen.render(&mut encoder, &view);
+        self.ds_screen_upper.render(&mut encoder, &view);
+        self.ds_screen_lower.render(&mut encoder, &view);
 
         // submit will accept anything that implements IntoIter
         self.queue.submit(std::iter::once(encoder.finish()));
@@ -137,9 +163,12 @@ impl State {
         Ok(())
     }
 
-    pub fn write_texture(&mut self, buffer: &BytesMut) {
-        self.ds_screen.write_texture(buffer);
-        self.ds_screen.update_textures(&self.queue);
+    pub fn write_texture(&mut self, upper_buffer: &BytesMut, lower_buffer: &BytesMut) {
+        self.ds_screen_upper.write_texture(upper_buffer);
+        self.ds_screen_upper.update_textures(&self.queue);
+
+        self.ds_screen_lower.write_texture(lower_buffer);
+        self.ds_screen_lower.update_textures(&self.queue);
     }
 }
 

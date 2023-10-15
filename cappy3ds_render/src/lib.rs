@@ -49,7 +49,7 @@ fn trash_code(v: &mut State) {
     let mut cappy3ds = cappy3ds::Cappy3ds::new(
         |audio: &[i16], upper_buffer: BytesMut, lower_buffer: BytesMut| {
             if upper_buffer.len() >= 288000 {
-                v.write_texture(&upper_buffer);
+                v.write_texture(&upper_buffer, &lower_buffer);
 
                 v.render();
             }

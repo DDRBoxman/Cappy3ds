@@ -1,18 +1,19 @@
 use crate::primitive::Vertex;
 use bytes::BytesMut;
+use glam::Mat4;
 use wgpu::{util::DeviceExt, Extent3d, TextureFormat};
 
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-1.0, -1.0, 0.0],
+        position: [0.0, 0.0, 0.0],
         tex_coords: [0.0, 0.0],
     },
     Vertex {
-        position: [1.0, -1.0, 0.0],
+        position: [1.0, 0.0, 0.0],
         tex_coords: [0.0, 1.0],
     },
     Vertex {
-        position: [-1.0, 1.0, 0.0],
+        position: [0.0, 1.0, 0.0],
         tex_coords: [1.0, 0.0],
     },
     Vertex {
@@ -33,17 +34,24 @@ pub struct DSScreen {
     texture_update: bool,
     texture_size: Extent3d,
     buffer: BytesMut,
+    pos_x: u32,
+    pos_y: u32,
+    transform_buffer: wgpu::Buffer,
 }
 
 impl DSScreen {
-    pub fn new(device: &wgpu::Device, texture_format: TextureFormat) -> Self {
+    pub fn new(
+        device: &wgpu::Device,
+        texture_format: TextureFormat,
+        width: u32,
+        height: u32,
+        placeholderImageBytes: &[u8],
+    ) -> Self {
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(VERTICES),
             usage: wgpu::BufferUsages::VERTEX,
         });
-
-        let num_vertices = VERTICES.len() as u32;
 
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
@@ -54,8 +62,8 @@ impl DSScreen {
         let num_indices = INDICES.len() as u32;
 
         let texture_size = wgpu::Extent3d {
-            width: 240,
-            height: 400,
+            width,
+            height,
             depth_or_array_layers: 1,
         };
         let diffuse_texture = device.create_texture(&wgpu::TextureDescriptor {
@@ -81,10 +89,6 @@ impl DSScreen {
             view_formats: &[],
         });
 
-        let diffuse_bytes = include_bytes!("../resources/test/upper_5.png");
-        let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
-        let diffuse_rgba = diffuse_image.to_rgba8();
-
         // use image::GenericImageView;
         // let dimensions = diffuse_image.dimensions();
 
@@ -107,6 +111,16 @@ impl DSScreen {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
+                        visibility: wgpu::ShaderStages::VERTEX,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: wgpu::BufferSize::new(64),
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
@@ -116,7 +130,7 @@ impl DSScreen {
                         count: None,
                     },
                     wgpu::BindGroupLayoutEntry {
-                        binding: 1,
+                        binding: 2,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         // This should match the filterable field of the
                         // corresponding Texture entry above.
@@ -127,15 +141,28 @@ impl DSScreen {
                 label: Some("texture_bind_group_layout"),
             });
 
+        let transform = glam::Mat4::default();
+
+        let mx_ref: &[f32; 16] = transform.as_ref();
+        let uniform_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Uniform Buffer"),
+            contents: bytemuck::cast_slice(mx_ref),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+
         let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &texture_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&diffuse_texture_view),
+                    resource: uniform_buf.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
+                    resource: wgpu::BindingResource::TextureView(&diffuse_texture_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
                     resource: wgpu::BindingResource::Sampler(&diffuse_sampler),
                 },
             ],
@@ -193,7 +220,7 @@ impl DSScreen {
 
         // todo: hardcoded lol
         let mut buffer = BytesMut::with_capacity(384000);
-        buffer.extend_from_slice(&diffuse_rgba);
+        buffer.extend_from_slice(&placeholderImageBytes);
 
         DSScreen {
             vertex_buffer,
@@ -205,6 +232,9 @@ impl DSScreen {
             texture_update: true,
             texture_size,
             buffer,
+            pos_x: 0,
+            pos_y: 0,
+            transform_buffer: uniform_buf,
         }
     }
 
@@ -229,12 +259,24 @@ impl DSScreen {
                 // The layout of the texture
                 wgpu::ImageDataLayout {
                     offset: 0,
-                    bytes_per_row: Some(4 * 240),
-                    rows_per_image: Some(400),
+                    bytes_per_row: Some(4 * self.texture_size.width),
+                    rows_per_image: Some(self.texture_size.height),
                 },
                 self.texture_size,
             );
         }
+    }
+
+    pub fn set_position(&mut self, queue: &wgpu::Queue, x: u32, y: u32) {
+        self.pos_x = x;
+        self.pos_y = y;
+        let transform = self.get_matrix();
+        let mx_ref: &[f32; 16] = transform.as_ref();
+        queue.write_buffer(&self.transform_buffer, 0, bytemuck::cast_slice(mx_ref));
+    }
+
+    fn get_matrix(&self) -> glam::Mat4 {
+        generate_matrix(self.texture_size.width, self.texture_size.height, self.pos_x, self.pos_y)
     }
 
     pub fn render(&self, encoder: &mut wgpu::CommandEncoder, render_target: &wgpu::TextureView) {
@@ -260,4 +302,23 @@ impl DSScreen {
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
         }
     }
+}
+
+fn generate_matrix(width: u32, height: u32, x: u32, y: u32) -> glam::Mat4 {
+    const SCENE_WIDTH: u32 = 1270;
+    const SCENE_HEIGHT: u32 = 720;
+
+    let mx_total = glam::Mat4::orthographic_rh(0.0, SCENE_WIDTH as f32, 0.0, SCENE_HEIGHT as f32, 0.0, 100.0);
+
+    // todo: fix the verticies so our quad isn't rotated or whatever, it is going to kill us later
+    let y = SCENE_HEIGHT - width - y;//y + height;//SCENE_HEIGHT - height - y;
+
+    let translate = glam::Mat4::from_translation(glam::Vec3 {
+        x: x as f32,
+        y: y as f32,
+        z: 0.0,
+    });
+    let scale = glam::Mat4::from_scale(glam::Vec3::new(height as f32, width as f32, 1.0));
+
+    mx_total * translate * scale
 }
