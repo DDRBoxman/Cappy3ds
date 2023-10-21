@@ -1,9 +1,10 @@
 [package]
 name = "cappy3ds"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+repository = "https://github.com/DDRBoxman/Cappy3ds"
+description = "A library to interface with various 3DS and DS capture cards"
 
 [dependencies]
 hex = "0.4.3"
