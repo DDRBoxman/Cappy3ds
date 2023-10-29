@@ -6,7 +6,7 @@ edition = "2021"
 build = "build.rs"
 
 [build-dependencies]
-cbindgen = "0.1.29"
+cbindgen = "0.26.0"
 csbindgen = "1.8.0"
 
 [dependencies]
