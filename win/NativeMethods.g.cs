@@ -12,7 +12,7 @@ namespace CsBindgen
 {
     internal static unsafe partial class NativeMethods
     {
-        const string __DllName = "libcappy3ds";
+        const string __DllName = "cappy3ds_render";
 
 
 
