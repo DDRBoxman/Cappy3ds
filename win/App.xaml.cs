@@ -46,8 +46,6 @@ namespace Cappy3ds
         {
             m_window = new MainWindow();
             m_window.Activate();
-
-            CsBindgen.NativeMethods.hello_world();
         }
 
         private Window m_window;
