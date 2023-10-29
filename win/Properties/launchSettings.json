@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Cappy3ds (Package)": {
+      "commandName": "MsixPackage",
+      "nativeDebugging": true
+    },
+    "Cappy3ds (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -6,8 +6,10 @@ use crate::dsscreen::DSScreen;
 const SCENE_WIDTH: u32 = 1270;
 const SCENE_HEIGHT: u32 = 720;
 
+use wgpu::{Instance, Surface};
+
 pub struct State {
-    surface: wgpu::Surface,
+    pub surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
     //config: wgpu::SurfaceConfiguration,
@@ -21,20 +23,25 @@ pub struct State {
 }
 
 impl State {
+    pub async fn new_from_swap_chain_panel(swap_chain_panel: *mut std::ffi::c_void) -> Self {
+        let instance = Self::create_instance();
+
+        // # Safety
+        //
+        // The surface needs to live as long as the window that created it.
+        // State owns the window so this should be safe.
+        let surface = unsafe { instance.create_surface_from_swap_chain_panel(swap_chain_panel) };
+
+        Self::new_with_surface(instance, surface).await
+    }
+
     // Creating some of the wgpu types requires async code
     pub async fn new<
         W: raw_window_handle::HasRawWindowHandle + raw_window_handle::HasRawDisplayHandle,
     >(
         window: &W,
     ) -> Self {
-        //  let size = window.inner_size();
-
-        // The instance is a handle to our GPU
-        // Backends::all => Vulkan + Metal + DX12 + Browser WebGPU
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::all(),
-            dx12_shader_compiler: Default::default(),
-        });
+        let instance = Self::create_instance();
 
         // # Safety
         //
@@ -42,6 +49,30 @@ impl State {
         // State owns the window so this should be safe.
         let surface = unsafe { instance.create_surface(&window) }.unwrap();
 
+        Self::new_with_surface(instance, surface).await
+    }
+
+    fn create_instance() -> wgpu::Instance{
+        // The instance is a handle to our GPU
+        // Backends::all => Vulkan + Metal + DX12 + Browser WebGPU
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            backends: wgpu::Backends::all(),
+            dx12_shader_compiler: Default::default(),
+            gles_minor_version: wgpu::Gles3MinorVersion::default(),
+            flags: wgpu::InstanceFlags::default(),
+        });
+
+        return instance;
+    }
+
+    async fn new_with_surface(instance: Instance, surface: Surface) -> Self {
+                //  let size = window.inner_size();
+
+                let width = 400;
+                let height = 400;
+        
+
+                
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
@@ -83,6 +114,7 @@ impl State {
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
         };
+
         surface.configure(&device, &config);
 
         let diffuse_bytes = include_bytes!("../resources/test/upper_5.png");
@@ -146,10 +178,12 @@ impl State {
                             b: 0.3,
                             a: 1.0,
                         }),
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
             });
         }
 
