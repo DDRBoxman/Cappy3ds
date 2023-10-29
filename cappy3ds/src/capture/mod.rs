@@ -3,7 +3,7 @@ pub mod katsukitty;
 use simple_error::SimpleError;
 use rusb::{Device, DeviceDescriptor, DeviceHandle, UsbContext};
 
-trait Capture {
+pub trait Capture {
     fn connect<T: UsbContext>(context: &mut T) -> Result<DeviceHandle<T>, SimpleError>;
 
     fn open_device<T: UsbContext>(

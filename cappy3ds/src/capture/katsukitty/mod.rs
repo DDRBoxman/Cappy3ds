@@ -24,8 +24,16 @@ mod parse;
 #[folder = "resources/Katsukity/"]
 struct KatsukityResources;
 
-struct Katsukity {
+pub struct Katsukity {
 
+}
+
+impl Katsukity {
+    pub fn new() -> Self {
+        return Self{
+
+        };
+    }
 }
 
 impl Capture for Katsukity {

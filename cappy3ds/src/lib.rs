@@ -1,5 +1,7 @@
 mod capture;
 
+use capture::{Capture, katsukitty::Katsukity};
+
 use bytes::BytesMut;
 use rusb::Context;
 
@@ -22,8 +24,10 @@ where
     }
 
     pub fn connect(&mut self) {
+        let katsukity = capture::katsukitty::Katsukity::new();
+        
         match Context::new() {
-            Ok(mut context) => match capture::katsukitty::connect(&mut context) {
+            Ok(mut context) => match Katsukity::connect(&mut context) {
                 Ok(handle) => {
                     self.device_handle = Some(handle);
                     self.usb_context = Some(context);
