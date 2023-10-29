@@ -9,7 +9,11 @@ extern crate libusb1_sys as usbffi;
 use bytes::BytesMut;
 use simple_error::SimpleError;
 
+
+
 use rusb::{Device, DeviceDescriptor, DeviceHandle, UsbContext};
+
+use super::Capture;
 
 mod fpga;
 mod fx2;
@@ -18,87 +22,67 @@ mod parse;
 
 #[derive(RustEmbed)]
 #[folder = "resources/Katsukity/"]
-struct Katsukity;
+struct KatsukityResources;
 
-pub fn connect<T: UsbContext>(context: &mut T) -> Result<DeviceHandle<T>, SimpleError> {
-    let firmware = Katsukity::get("firm.bin").unwrap();
-    let bitstream = Katsukity::get("bitstream.bin").unwrap();
+struct Katsukity {
 
-    let vid = 0x0752;
-    let pid = 0x8613;
+}
 
-    let mut flashed_fx2 = false;
-    match open_device(context, vid, pid) {
-        Some((mut device, device_desc, mut handle)) => {
-            println!("Opened {:04x}:{:04x}", vid, pid);
-            fx2::send_firmware(&mut handle, firmware.data.to_vec());
-            flashed_fx2 = true;
-        }
-        None => {
-            println!("could not find FX2 device");
-        }
-    }
-
-    if flashed_fx2 {
-        println!("Waiting for second interface");
-        let sleep_time = time::Duration::from_millis(5000);
-        thread::sleep(sleep_time);
-        // todo: loop with device check instead of sleeping
-    }
-
-    match open_device(context, 0x0752, 0xf2c0) {
-        Some((mut device, device_desc, mut handle)) => {
-            println!("Opened secondary device");
-            match handle.claim_interface(0) {
-                Ok(_) => {}
-                Err(err) => panic!("could not claim second device: {}", err),
+impl Capture for Katsukity {
+    fn connect<T: UsbContext>(context: &mut T) -> Result<DeviceHandle<T>, SimpleError> {
+        let firmware = KatsukityResources::get("firm.bin").unwrap();
+        let bitstream = KatsukityResources::get("bitstream.bin").unwrap();
+    
+        let vid = 0x0752;
+        let pid = 0x8613;
+    
+        let mut flashed_fx2 = false;
+        match Self::open_device(context, vid, pid) {
+            Some((mut device, device_desc, mut handle)) => {
+                println!("Opened {:04x}:{:04x}", vid, pid);
+                fx2::send_firmware(&mut handle, firmware.data.to_vec());
+                flashed_fx2 = true;
             }
-
-            // bleh apparently relesase runs fast enough to break this
-            // add in some sleeps
-            //if fpga::check_fpga_programmed(&mut handle) {
-            //} else {
-            fpga::read_eeprom(&mut handle);
-            fpga::configure_fpga(&mut handle, bitstream.data.to_vec());
-            fpga::configure_port(&mut handle);
-            //}
-
-            fpga::fifo_start(&mut handle);
-
-            Ok(handle)
+            None => {
+                println!("could not find FX2 device");
+            }
         }
-        None => Err(SimpleError::new(
-            "secondary device missing, firmware upload failed?",
-        )),
+    
+        if flashed_fx2 {
+            println!("Waiting for second interface");
+            let sleep_time = time::Duration::from_millis(5000);
+            thread::sleep(sleep_time);
+            // todo: loop with device check instead of sleeping
+        }
+    
+        match Self::open_device(context, 0x0752, 0xf2c0) {
+            Some((mut device, device_desc, mut handle)) => {
+                println!("Opened secondary device");
+                match handle.claim_interface(0) {
+                    Ok(_) => {}
+                    Err(err) => panic!("could not claim second device: {}", err),
+                }
+    
+                // bleh apparently relesase runs fast enough to break this
+                // add in some sleeps
+                //if fpga::check_fpga_programmed(&mut handle) {
+                //} else {
+                fpga::read_eeprom(&mut handle);
+                fpga::configure_fpga(&mut handle, bitstream.data.to_vec());
+                fpga::configure_port(&mut handle);
+                //}
+    
+                fpga::fifo_start(&mut handle);
+    
+                Ok(handle)
+            }
+            None => Err(SimpleError::new(
+                "secondary device missing, firmware upload failed?",
+            )),
+        }
     }
 }
 
-fn open_device<T: UsbContext>(
-    context: &mut T,
-    vid: u16,
-    pid: u16,
-) -> Option<(Device<T>, DeviceDescriptor, DeviceHandle<T>)> {
-    let devices = match context.devices() {
-        Ok(d) => d,
-        Err(_) => return None,
-    };
-
-    for device in devices.iter() {
-        let device_desc = match device.device_descriptor() {
-            Ok(d) => d,
-            Err(_) => continue,
-        };
-
-        if device_desc.vendor_id() == vid && device_desc.product_id() == pid {
-            match device.open() {
-                Ok(handle) => return Some((device, device_desc, handle)),
-                Err(e) => panic!("Device found but failed to open: {}", e),
-            }
-        }
-    }
-
-    None
-}
 
 pub fn do_capture<T: UsbContext, F>(handle: &mut DeviceHandle<T>, data_callback: F)
 where
