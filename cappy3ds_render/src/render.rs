@@ -23,6 +23,7 @@ pub struct State {
 }
 
 impl State {
+    #[cfg(target_os = "windows")]
     pub async fn new_from_swap_chain_panel(swap_chain_panel: *mut std::ffi::c_void) -> Self {
         let instance = Self::create_instance();
 
