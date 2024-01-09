@@ -27,8 +27,8 @@ If your device works and is not listed above or is incompatable feel free to ope
 
 ### Macos
 
-https://raw.githubusercontent.com/DDRBoxman/Cappy3ds/main/docs/screenshots/wip_macos.png
+![](https://raw.githubusercontent.com/DDRBoxman/Cappy3ds/main/docs/screenshots/wip_macos.png)
 
 ### Windows
 
-https://raw.githubusercontent.com/DDRBoxman/Cappy3ds/main/docs/screenshots/wip_win.png
+![](https://raw.githubusercontent.com/DDRBoxman/Cappy3ds/main/docs/screenshots/wip_win.png)
