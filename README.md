@@ -21,3 +21,15 @@ https://github.com/DDRBoxman/Cappy3ds/tree/main/cappy3ds
 * More Katsukitty devices
 
 If your device works and is not listed above or is incompatable feel free to open an issue on the github repo.
+
+#### WIP Screenshots
+
+https://github.com/DDRBoxman/Cappy3ds/assets/207897/49305153-0348-4964-a5cd-34ea08b224b9
+
+### Macos
+
+https://raw.githubusercontent.com/DDRBoxman/Cappy3ds/main/docs/screenshots/wip_macos.png
+
+### Windows
+
+https://raw.githubusercontent.com/DDRBoxman/Cappy3ds/main/docs/screenshots/wip_win.png
